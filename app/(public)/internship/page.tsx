@@ -8,7 +8,7 @@ import InternshipProcess from "@/components/home/internship/process/internshipPr
 import InternshipCTA from "@/components/home/internship/cta/internshipCTA";
 
 export const metadata: Metadata = {
-  title: "Software Development Internship",
+  title: "Software Development Internship | HIKOO Technology",
 
   description:
     "Explore software development internship opportunities at HIKOO Technology in Madurai. Gain practical experience, develop technical skills, and build your career through structured internship pathways.",
@@ -72,13 +72,44 @@ export const metadata: Metadata = {
 };
 
 export default function InternshipPage() {
-  return(
+  return (
     <main>
+      {/* =========================================
+          INTERNSHIP HERO
+      ========================================== */}
+
       <InternshipHero />
+
+      {/* =========================================
+          WHY HIKOO INTERNSHIP
+      ========================================== */}
+
       <WhyHikooInternship />
+
+      {/* =========================================
+          INTERNSHIP OPPORTUNITIES
+          Job Internship
+          College Internship
+      ========================================== */}
+
       <InternshipOpportunities />
+
+      {/* =========================================
+          WHAT YOU'LL LEARN
+      ========================================== */}
+
       <WhatYouLearn />
+
+      {/* =========================================
+          INTERNSHIP PROCESS
+      ========================================== */}
+
       <InternshipProcess />
+
+      {/* =========================================
+          FINAL CTA
+      ========================================== */}
+
       <InternshipCTA />
     </main>
   );
