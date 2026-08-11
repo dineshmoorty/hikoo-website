@@ -6,6 +6,10 @@ import {
   useState,
 } from "react";
 
+// =====================================================
+// TYPES
+// =====================================================
+
 type FormData = {
   name: string;
   email: string;
@@ -32,23 +36,41 @@ const initialForm: FormData = {
   message: "",
 };
 
+// =====================================================
+// COMPONENT
+// =====================================================
+
 export default function JobInternshipForm() {
-  const [form, setForm] = useState<FormData>(
-    initialForm
-  );
+  const [form, setForm] =
+    useState<FormData>(
+      initialForm
+    );
 
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof FormData, string>>
-  >({});
+  const [errors, setErrors] =
+    useState<
+      Partial<
+        Record<keyof FormData, string>
+      >
+    >({});
 
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] =
+    useState(false);
 
-  // =====================================================
-  // UPDATE TEXT / SELECT / TEXTAREA FIELDS
-  // =====================================================
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+  const [serverError, setServerError] =
+    useState("");
+
+  // ===================================================
+  // UPDATE FIELD
+  // ===================================================
 
   const updateField = (
-    field: Exclude<keyof FormData, "resume">,
+    field: Exclude<
+      keyof FormData,
+      "resume"
+    >,
     value: string
   ) => {
     setForm((previous) => ({
@@ -62,16 +84,19 @@ export default function JobInternshipForm() {
     }));
 
     setSubmitted(false);
+    setServerError("");
   };
 
-  // =====================================================
+  // ===================================================
   // RESUME CHANGE
-  // =====================================================
+  // ===================================================
 
   const handleResumeChange = (
     event: ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0] ?? null;
+    const file =
+      event.target.files?.[0] ||
+      null;
 
     setForm((previous) => ({
       ...previous,
@@ -84,11 +109,12 @@ export default function JobInternshipForm() {
     }));
 
     setSubmitted(false);
+    setServerError("");
   };
 
-  // =====================================================
-  // VALIDATION
-  // =====================================================
+  // ===================================================
+  // VALIDATE
+  // ===================================================
 
   const validate = () => {
     const nextErrors: Partial<
@@ -106,7 +132,7 @@ export default function JobInternshipForm() {
 
     if (!form.email.trim()) {
       nextErrors.email =
-        "Please enter your email.";
+        "Please enter your email address.";
     } else if (
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
         form.email
@@ -121,27 +147,33 @@ export default function JobInternshipForm() {
     if (!form.phone.trim()) {
       nextErrors.phone =
         "Please enter your phone number.";
-    } else if (
-      !/^[0-9+\-\s()]{7,20}$/.test(
-        form.phone
-      )
-    ) {
-      nextErrors.phone =
-        "Please enter a valid phone number.";
     }
 
     // Qualification
 
-    if (!form.qualification.trim()) {
+    if (
+      !form.qualification.trim()
+    ) {
       nextErrors.qualification =
         "Please enter your qualification.";
     }
 
     // Graduation Year
 
-    if (!form.graduationYear.trim()) {
+    if (
+      !form.graduationYear.trim()
+    ) {
       nextErrors.graduationYear =
         "Please enter your graduation year.";
+    }
+
+    // Preferred Role
+
+    if (
+      !form.preferredRole.trim()
+    ) {
+      nextErrors.preferredRole =
+        "Please select your preferred role.";
     }
 
     // Skills
@@ -149,13 +181,6 @@ export default function JobInternshipForm() {
     if (!form.skills.trim()) {
       nextErrors.skills =
         "Please enter your skills.";
-    }
-
-    // Preferred Role
-
-    if (!form.preferredRole.trim()) {
-      nextErrors.preferredRole =
-        "Please select your preferred role.";
     }
 
     // Resume
@@ -182,7 +207,9 @@ export default function JobInternshipForm() {
           "Please upload a PDF, DOC, or DOCX file.";
       }
 
-      if (form.resume.size > maxSize) {
+      if (
+        form.resume.size > maxSize
+      ) {
         nextErrors.resume =
           "Resume size must be less than 5 MB.";
       }
@@ -198,46 +225,196 @@ export default function JobInternshipForm() {
     setErrors(nextErrors);
 
     return (
-      Object.keys(nextErrors).length === 0
+      Object.keys(nextErrors).length ===
+      0
     );
   };
 
-  // =====================================================
+  // ===================================================
   // SUBMIT
-  // =====================================================
+  // ===================================================
 
-  const handleSubmit = (
+  const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
 
+    setSubmitted(false);
+    setServerError("");
+
+    // Validate frontend
     if (!validate()) {
       return;
     }
 
-    /*
-      Backend / email integration
-      will be connected later.
-    */
+    setIsSubmitting(true);
 
-    setSubmitted(true);
+    try {
+      // =================================================
+      // CREATE FORM DATA
+      // =================================================
 
-    setForm(initialForm);
+      const formData =
+        new FormData();
 
-    // Reset file input manually
-    const fileInput =
-      document.getElementById(
-        "job-resume"
-      ) as HTMLInputElement | null;
+      // Internship type
 
-    if (fileInput) {
-      fileInput.value = "";
+      formData.append(
+        "type",
+        "job"
+      );
+
+      // Personal
+
+      formData.append(
+        "name",
+        form.name
+      );
+
+      formData.append(
+        "email",
+        form.email
+      );
+
+      formData.append(
+        "phone",
+        form.phone
+      );
+
+      // Education
+
+      formData.append(
+        "qualification",
+        form.qualification
+      );
+
+      formData.append(
+        "graduationYear",
+        form.graduationYear
+      );
+
+      // Professional
+
+      formData.append(
+        "experience",
+        form.experience
+      );
+
+      formData.append(
+        "preferredRole",
+        form.preferredRole
+      );
+
+      formData.append(
+        "skills",
+        form.skills
+      );
+
+      // Resume
+
+      if (form.resume) {
+        formData.append(
+          "resume",
+          form.resume
+        );
+      }
+
+      // Message
+
+      formData.append(
+        "message",
+        form.message
+      );
+
+      // =================================================
+      // SEND API REQUEST
+      // =================================================
+
+      const response =
+        await fetch(
+          "/api/internship/apply",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+      // =================================================
+      // READ API RESPONSE
+      // =================================================
+
+      const result =
+        await response.json();
+
+      console.log(
+        "Internship API response:",
+        result
+      );
+
+      // =================================================
+      // HANDLE ERROR
+      // =================================================
+
+      if (!response.ok) {
+        console.error(
+          "Internship API Error:",
+          result
+        );
+
+        throw new Error(
+          result.error ||
+            result.message ||
+            "Failed to submit application."
+        );
+      }
+
+      // =================================================
+      // SUCCESS
+      // =================================================
+
+      setSubmitted(true);
+
+      setServerError("");
+
+      setForm(initialForm);
+
+      // Reset file input
+
+      const fileInput =
+        document.getElementById(
+          "job-resume"
+        ) as HTMLInputElement | null;
+
+      if (fileInput) {
+        fileInput.value = "";
+      }
+
+      // Scroll to success message
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    } catch (error) {
+      console.error(
+        "Application submission error:",
+        error
+      );
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while submitting your application.";
+
+      setServerError(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // =====================================================
+  // ===================================================
   // INPUT CLASS
-  // =====================================================
+  // ===================================================
 
   const inputClass = (
     field: keyof FormData
@@ -265,9 +442,9 @@ export default function JobInternshipForm() {
     }
   `;
 
-  // =====================================================
+  // ===================================================
   // RENDER
-  // =====================================================
+  // ===================================================
 
   return (
     <form
@@ -275,6 +452,7 @@ export default function JobInternshipForm() {
       noValidate
       className="mt-8 space-y-6"
     >
+
       {/* =================================================
           SUCCESS
       ================================================== */}
@@ -287,14 +465,46 @@ export default function JobInternshipForm() {
             border-green-200
             bg-green-50
             px-4
-            py-3
+            py-4
             text-sm
             font-medium
             text-green-700
           "
         >
-          Your Job Internship application has been
-          submitted successfully.
+          Your Job Internship application
+          has been submitted successfully.
+          Our team will review your
+          application and get back to you.
+        </div>
+      )}
+
+      {/* =================================================
+          SERVER ERROR
+      ================================================== */}
+
+      {serverError && (
+        <div
+          className="
+            rounded-2xl
+            border
+            border-red-200
+            bg-red-50
+            px-4
+            py-4
+          "
+        >
+          <p className="text-sm font-semibold text-red-700">
+            Application submission failed
+          </p>
+
+          <p className="mt-1 text-sm leading-6 text-red-600">
+            {serverError}
+          </p>
+
+          <p className="mt-2 text-xs text-red-500">
+            Please check the terminal for the
+            complete server error.
+          </p>
         </div>
       )}
 
@@ -317,7 +527,7 @@ export default function JobInternshipForm() {
 
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
 
-          {/* Name */}
+          {/* Full Name */}
 
           <div>
             <label
@@ -338,7 +548,9 @@ export default function JobInternshipForm() {
                 )
               }
               placeholder="Your full name"
-              className={inputClass("name")}
+              className={inputClass(
+                "name"
+              )}
             />
 
             {errors.name && (
@@ -369,7 +581,9 @@ export default function JobInternshipForm() {
                 )
               }
               placeholder="you@example.com"
-              className={inputClass("email")}
+              className={inputClass(
+                "email"
+              )}
             />
 
             {errors.email && (
@@ -400,7 +614,9 @@ export default function JobInternshipForm() {
                 )
               }
               placeholder="+91 XXXXX XXXXX"
-              className={inputClass("phone")}
+              className={inputClass(
+                "phone"
+              )}
             />
 
             {errors.phone && (
@@ -509,7 +725,7 @@ export default function JobInternshipForm() {
             )}
           </div>
 
-          {/* Graduation Year */}
+          {/* Graduation */}
 
           <div>
             <label
@@ -662,14 +878,15 @@ export default function JobInternshipForm() {
                 id="job-resume"
                 type="file"
                 accept=".pdf,.doc,.docx"
-                onChange={handleResumeChange}
+                onChange={
+                  handleResumeChange
+                }
                 className="
                   block
                   w-full
                   cursor-pointer
                   text-sm
                   text-gray-600
-
                   file:mr-4
                   file:rounded-full
                   file:border-0
@@ -679,7 +896,6 @@ export default function JobInternshipForm() {
                   file:text-xs
                   file:font-semibold
                   file:text-white
-
                   file:transition-all
                   file:hover:bg-black
                 "
@@ -688,8 +904,6 @@ export default function JobInternshipForm() {
               <p className="mt-3 text-xs text-gray-400">
                 PDF, DOC or DOCX · Maximum 5 MB
               </p>
-
-              {/* Selected File */}
 
               {form.resume && (
                 <div
@@ -722,7 +936,18 @@ export default function JobInternshipForm() {
                     </p>
                   </div>
 
-                  <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">
+                  <span
+                    className="
+                      shrink-0
+                      rounded-full
+                      bg-gray-100
+                      px-3
+                      py-1
+                      text-xs
+                      font-medium
+                      text-gray-500
+                    "
+                  >
                     Selected
                   </span>
                 </div>
@@ -757,7 +982,9 @@ export default function JobInternshipForm() {
                 )
               }
               placeholder="e.g. React, JavaScript, Next.js, Git..."
-              className={inputClass("skills")}
+              className={inputClass(
+                "skills"
+              )}
             />
 
             {errors.skills && (
@@ -820,12 +1047,14 @@ export default function JobInternshipForm() {
         "
       >
         <p className="text-xs leading-5 text-gray-400">
-          Please make sure the information provided is
-          accurate before submitting.
+          Please make sure the information
+          provided is accurate before
+          submitting.
         </p>
 
         <button
           type="submit"
+          disabled={isSubmitting}
           className="
             group
             inline-flex
@@ -847,19 +1076,26 @@ export default function JobInternshipForm() {
             hover:-translate-y-0.5
             hover:bg-black
             hover:shadow-xl
+            disabled:cursor-not-allowed
+            disabled:opacity-60
+            disabled:hover:translate-y-0
           "
         >
-          Submit Application
+          {isSubmitting
+            ? "Submitting..."
+            : "Submit Application"}
 
-          <span
-            className="
-              transition-transform
-              duration-300
-              group-hover:translate-x-1
-            "
-          >
-            →
-          </span>
+          {!isSubmitting && (
+            <span
+              className="
+                transition-transform
+                duration-300
+                group-hover:translate-x-1
+              "
+            >
+              →
+            </span>
+          )}
         </button>
       </div>
     </form>
