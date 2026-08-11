@@ -532,36 +532,68 @@ export default function CollegeInternshipForm() {
                 Select your preferred area
               </option>
 
-              <option value="React.js">
-                React.js
+              <option value="PHP Full Stack">
+                PHP Full Stack
               </option>
 
-              <option value="Next.js">
-                Next.js
+              <option value="Java Full Stack">
+                Java Full Stack
               </option>
 
-              <option value="Java">
-                Java
+              <option value="Python Full Stack">
+                Python Full Stack
               </option>
 
-              <option value="Python">
-                Python
+              <option value="Full Stack">
+                Full Stack
               </option>
 
-              <option value="iOS">
-                iOS
+              <option value="Mobile App Development">
+                Mobile App Development
               </option>
 
-              <option value="Full Stack Development">
-                Full Stack Development
+              <option value="Android Development">
+                Android Development
+              </option>
+
+              <option value="iOS Development">
+                iOS Development
+              </option>
+
+              <option value="Digital Marketing">
+                Digital Marketing
               </option>
 
               <option value="UI/UX Design">
                 UI/UX Design
               </option>
 
+              <option value="Cloud Services">
+                Cloud Services
+              </option>
+
+              <option value="Artificial Intelligence">
+                Artificial Intelligence
+              </option>
+
+              <option value="Cyber Security">
+                Cyber Security
+              </option>
+
+              <option value="Data Science">
+                Data Science
+              </option>
+
               <option value="Data Analytics">
                 Data Analytics
+              </option>
+
+              <option value="Software Testing">
+                Software Testing
+              </option>
+
+              <option value="Game Development">
+                Game Development
               </option>
             </select>
 
@@ -597,6 +629,14 @@ export default function CollegeInternshipForm() {
             >
               <option value="">
                 Select duration
+              </option>
+              
+              <option value="15 Days">
+                15 Days
+              </option>
+
+              <option value="1 Month">
+                1 Month
               </option>
 
               <option value="3 Months">
