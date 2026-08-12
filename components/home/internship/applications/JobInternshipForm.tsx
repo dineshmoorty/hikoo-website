@@ -59,6 +59,9 @@ export default function JobInternshipForm() {
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
+  const [showSuccessDialog, setShowSuccessDialog] =
+    useState(false);
+
   const [serverError, setServerError] =
     useState("");
 
@@ -73,6 +76,12 @@ export default function JobInternshipForm() {
     >,
     value: string
   ) => {
+    if (field === "phone") {
+      value = value
+        .replace(/\D/g, "")
+        .slice(0, 10);
+    }
+
     setForm((previous) => ({
       ...previous,
       [field]: value,
@@ -121,70 +130,91 @@ export default function JobInternshipForm() {
       Record<keyof FormData, string>
     > = {};
 
-    // Name
+    const name =
+      form.name.trim();
 
-    if (!form.name.trim()) {
+    const email =
+      form.email.trim();
+
+    const phone =
+      form.phone.trim();
+
+    const qualification =
+      form.qualification.trim();
+
+    const graduationYear =
+      form.graduationYear.trim();
+
+    const skills =
+      form.skills.trim();
+
+    const message =
+      form.message.trim();
+
+    // Name
+    if (!name) {
       nextErrors.name =
         "Please enter your full name.";
+    } else if (
+      !/^[A-Za-z][A-Za-z .'-]{1,49}$/.test(name)
+    ) {
+      nextErrors.name =
+        "Name should contain only letters and spaces.";
     }
 
     // Email
-
-    if (!form.email.trim()) {
+    if (!email) {
       nextErrors.email =
         "Please enter your email address.";
     } else if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-        form.email
-      )
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
     ) {
       nextErrors.email =
         "Please enter a valid email address.";
     }
 
     // Phone
-
-    if (!form.phone.trim()) {
+    if (!phone) {
       nextErrors.phone =
         "Please enter your phone number.";
+    } else if (!/^\d{10}$/.test(phone)) {
+      nextErrors.phone =
+        "Phone number must contain exactly 10 digits.";
     }
 
     // Qualification
-
-    if (
-      !form.qualification.trim()
-    ) {
+    if (!qualification) {
       nextErrors.qualification =
         "Please enter your qualification.";
     }
 
     // Graduation Year
-
-    if (
-      !form.graduationYear.trim()
-    ) {
+    if (!graduationYear) {
       nextErrors.graduationYear =
         "Please enter your graduation year.";
+    } else if (
+      !/^\d{4}$/.test(graduationYear)
+    ) {
+      nextErrors.graduationYear =
+        "Graduation year must be 4 digits.";
     }
 
     // Preferred Role
-
-    if (
-      !form.preferredRole.trim()
-    ) {
+    if (!form.preferredRole.trim()) {
       nextErrors.preferredRole =
         "Please select your preferred role.";
     }
 
     // Skills
-
-    if (!form.skills.trim()) {
+    if (!skills) {
       nextErrors.skills =
-        "Please enter your skills.";
+        "Please enter your technical skills.";
+    } else if (skills.length < 2) {
+      nextErrors.skills =
+        "Please enter at least one valid skill.";
     }
 
     // Resume
-
     if (!form.resume) {
       nextErrors.resume =
         "Please upload your resume.";
@@ -198,36 +228,27 @@ export default function JobInternshipForm() {
       const maxSize =
         5 * 1024 * 1024;
 
-      if (
-        !allowedTypes.includes(
-          form.resume.type
-        )
-      ) {
+      if (!allowedTypes.includes(form.resume.type)) {
         nextErrors.resume =
           "Please upload a PDF, DOC, or DOCX file.";
-      }
-
-      if (
-        form.resume.size > maxSize
-      ) {
+      } else if (form.resume.size > maxSize) {
         nextErrors.resume =
           "Resume size must be less than 5 MB.";
       }
     }
 
     // Message
-
-    if (!form.message.trim()) {
+    if (!message) {
       nextErrors.message =
         "Please tell us a little about yourself.";
+    } else if (message.length < 10) {
+      nextErrors.message =
+        "Please enter at least 10 characters.";
     }
 
     setErrors(nextErrors);
 
-    return (
-      Object.keys(nextErrors).length ===
-      0
-    );
+    return Object.keys(nextErrors).length === 0;
   };
 
   // ===================================================
@@ -373,6 +394,7 @@ export default function JobInternshipForm() {
       // =================================================
 
       setSubmitted(true);
+      setShowSuccessDialog(true);
 
       setServerError("");
 
@@ -808,36 +830,68 @@ export default function JobInternshipForm() {
                 Select a role
               </option>
 
-              <option value="React.js Developer">
-                React.js Developer
+              <option value="PHP Full Stack">
+                PHP Full Stack
               </option>
 
-              <option value="Java Developer">
-                Java Developer
+              <option value="Java Full Stack">
+                Java Full Stack
               </option>
 
-              <option value="Python Developer">
-                Python Developer
+              <option value="Python Full Stack">
+                Python Full Stack
               </option>
 
-              <option value="iOS Developer">
-                iOS Developer
+              <option value="Full Stack">
+                Full Stack
               </option>
 
-              <option value="Full Stack Developer">
-                Full Stack Developer
+              <option value="Mobile App Development">
+                Mobile App Development
               </option>
 
-              <option value="UI/UX Designer">
-                UI/UX Designer
+              <option value="Android Development">
+                Android Development
               </option>
 
-              <option value="Data Analyst">
-                Data Analyst
+              <option value="iOS Development">
+                iOS Development
               </option>
 
-              <option value="BDE">
-                Business Development Executive
+              <option value="Digital Marketing">
+                Digital Marketing
+              </option>
+
+              <option value="UI/UX Design">
+                UI/UX Design
+              </option>
+
+              <option value="Cloud Services">
+                Cloud Services
+              </option>
+
+              <option value="Artificial Intelligence">
+                Artificial Intelligence
+              </option>
+
+              <option value="Cyber Security">
+                Cyber Security
+              </option>
+
+              <option value="Data Science">
+                Data Science
+              </option>
+
+              <option value="Data Analytics">
+                Data Analytics
+              </option>
+
+              <option value="Software Testing">
+                Software Testing
+              </option>
+
+              <option value="Game Development">
+                Game Development
               </option>
             </select>
 
@@ -1098,6 +1152,114 @@ export default function JobInternshipForm() {
           )}
         </button>
       </div>
+
+      {/* =================================================
+          SUCCESS DIALOG
+      ================================================== */}
+
+      {showSuccessDialog && (
+        <div
+          className="
+            fixed
+            inset-0
+            z-[9999]
+            flex
+            items-center
+            justify-center
+            bg-black/50
+            px-4
+            backdrop-blur-sm
+          "
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="job-success-dialog-title"
+            className="
+              w-full
+              max-w-md
+              rounded-3xl
+              border
+              border-black/[0.06]
+              bg-white
+              p-8
+              text-center
+              shadow-2xl
+            "
+          >
+            <div
+              className="
+                mx-auto
+                flex
+                h-16
+                w-16
+                items-center
+                justify-center
+                rounded-full
+                bg-green-50
+                text-3xl
+                font-bold
+                text-green-600
+              "
+            >
+              ✓
+            </div>
+
+            <h2
+              id="job-success-dialog-title"
+              className="
+                mt-5
+                text-2xl
+                font-bold
+                tracking-tight
+                text-gray-950
+              "
+            >
+              Application Submitted Successfully
+            </h2>
+
+            <p
+              className="
+                mt-3
+                text-sm
+                leading-6
+                text-gray-500
+              "
+            >
+              Your Job Internship application has been
+              submitted successfully. Our team will review
+              your application and get back to you.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowSuccessDialog(false);
+              }}
+              className="
+                mt-7
+                inline-flex
+                w-full
+                items-center
+                justify-center
+                rounded-full
+                bg-gray-950
+                px-6
+                py-3.5
+                text-sm
+                font-semibold
+                text-white
+                transition-all
+                duration-300
+                hover:-translate-y-0.5
+                hover:bg-black
+              "
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

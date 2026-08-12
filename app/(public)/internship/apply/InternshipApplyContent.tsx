@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-import JobInternshipForm from "@/components/home/internship/applications/JobInternshipForm";
+import JobInternshipForm from "@/components/home/internship/applications/JobInternshipForm"
 import CollegeInternshipForm from "@/components/home/internship/applications/CollegeInternshipForm";
 
 export default function InternshipApplyContent() {
@@ -276,18 +276,25 @@ export default function InternshipApplyContent() {
 
                 <Arrow />
 
+                <PathStep text="15 Days Internship" />
+
+                <Arrow />
+
                 <PathStep text="3 Months Internship" />
 
-                <Arrow />
-
-                <PathStep text="3 Months Probation" />
 
                 <Arrow />
 
-                <PathStep text="Employee" />
+                <PathStep text="6 Months Internship" />
+
               </>
             ) : (
               <>
+                <PathStep text="Assesment" />
+
+                <Arrow />
+    
+                  
                 <PathStep text="3 Months Internship" />
 
                 <Arrow />
