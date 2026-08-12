@@ -43,3 +43,6 @@ next-env.d.ts
 # Google service account credentials
 credentials/
 *.json
+service-account-base64.txt
+oauth-client-base64.txt
+drive-token-base64.txt

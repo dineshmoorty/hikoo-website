@@ -1,73 +1,110 @@
 import { google } from "googleapis";
-import fs from "fs";
-import path from "path";
 
 // =====================================================
-// PATHS
+// ENVIRONMENT VARIABLES
 // =====================================================
 
-const credentialsDir = path.join(
-  process.cwd(),
-  "credentials"
-);
+const serviceAccountBase64 =
+  process.env.GOOGLE_SERVICE_ACCOUNT_BASE64;
 
-const serviceAccountPath = path.join(
-  credentialsDir,
-  "google-service-account.json"
-);
+const oauthClientBase64 =
+  process.env.GOOGLE_OAUTH_CLIENT_BASE64;
 
-const oauthClientPath = path.join(
-  credentialsDir,
-  "oauth-client.json"
-);
+const driveTokenBase64 =
+  process.env.GOOGLE_DRIVE_TOKEN_BASE64;
 
-const driveTokenPath = path.join(
-  credentialsDir,
-  "drive-token.json"
-);
+const sheetId =
+  process.env.GOOGLE_SHEET_ID;
+
+const driveFolderId =
+  process.env.GOOGLE_DRIVE_FOLDER_ID;
+
+const sheetName =
+  process.env.GOOGLE_SHEET_NAME ||
+  "HIKOO Internship Applications";
 
 // =====================================================
-// CHECK CREDENTIAL FILES
+// BASE64 JSON DECODER
 // =====================================================
 
-if (!fs.existsSync(serviceAccountPath)) {
+function decodeBase64Json(
+  value: string | undefined,
+  variableName: string
+) {
+  if (!value) {
+    throw new Error(
+      `${variableName} is missing.`
+    );
+  }
+
+  try {
+    const json = Buffer.from(
+      value,
+      "base64"
+    ).toString("utf-8");
+
+    return JSON.parse(json);
+  } catch {
+    throw new Error(
+      `${variableName} contains invalid Base64/JSON.`
+    );
+  }
+}
+
+// =====================================================
+// REQUIRED ENVIRONMENT VARIABLES
+// =====================================================
+
+if (!sheetId) {
   throw new Error(
-    "Google service account credentials not found."
+    "GOOGLE_SHEET_ID is missing."
   );
 }
 
-if (!fs.existsSync(oauthClientPath)) {
+if (!driveFolderId) {
   throw new Error(
-    "Google OAuth client credentials not found."
-  );
-}
-
-if (!fs.existsSync(driveTokenPath)) {
-  throw new Error(
-    "Google Drive OAuth token not found."
+    "GOOGLE_DRIVE_FOLDER_ID is missing."
   );
 }
 
 // =====================================================
-// LOAD SERVICE ACCOUNT
+// DECODE GOOGLE CREDENTIALS
 // =====================================================
 
 const serviceAccountCredentials =
-  JSON.parse(
-    fs.readFileSync(
-      serviceAccountPath,
-      "utf-8"
-    )
+  decodeBase64Json(
+    serviceAccountBase64,
+    "GOOGLE_SERVICE_ACCOUNT_BASE64"
+  );
+
+const oauthCredentials =
+  decodeBase64Json(
+    oauthClientBase64,
+    "GOOGLE_OAUTH_CLIENT_BASE64"
+  );
+
+const driveToken =
+  decodeBase64Json(
+    driveTokenBase64,
+    "GOOGLE_DRIVE_TOKEN_BASE64"
   );
 
 // =====================================================
-// SHEETS AUTH
+// GOOGLE SHEETS AUTH
 // =====================================================
 
 const sheetsAuth =
   new google.auth.GoogleAuth({
-    credentials:
-      serviceAccountCredentials,
+    credentials: {
+      client_email:
+        serviceAccountCredentials.client_email,
+
+      private_key:
+        serviceAccountCredentials.private_key,
+
+      project_id:
+        serviceAccountCredentials.project_id,
+    },
 
     scopes: [
       "https://www.googleapis.com/auth/spreadsheets",
@@ -75,20 +112,8 @@ const sheetsAuth =
   });
 
 // =====================================================
-// LOAD OAUTH CLIENT
+// OAUTH CONFIG
 // =====================================================
-
-const oauthCredentials =
-  JSON.parse(
-    fs.readFileSync(
-      oauthClientPath,
-      "utf-8"
-    )
-  );
-
-// Google OAuth credentials can have
-// "installed" or "web" depending on
-// the OAuth client type.
 
 const oauthConfig =
   oauthCredentials.installed ||
@@ -96,12 +121,12 @@ const oauthConfig =
 
 if (!oauthConfig) {
   throw new Error(
-    "Invalid OAuth client JSON. Expected installed or web credentials."
+    "Invalid Google OAuth client JSON."
   );
 }
 
 // =====================================================
-// DRIVE OAUTH CLIENT
+// GOOGLE DRIVE AUTH
 // =====================================================
 
 const driveAuth =
@@ -112,19 +137,7 @@ const driveAuth =
   );
 
 // =====================================================
-// LOAD SAVED TOKEN
-// =====================================================
-
-const driveToken =
-  JSON.parse(
-    fs.readFileSync(
-      driveTokenPath,
-      "utf-8"
-    )
-  );
-
-// =====================================================
-// SET DRIVE CREDENTIALS
+// SET DRIVE TOKEN
 // =====================================================
 
 driveAuth.setCredentials(
@@ -132,7 +145,7 @@ driveAuth.setCredentials(
 );
 
 // =====================================================
-// GOOGLE CLIENTS
+// GOOGLE SHEETS CLIENT
 // =====================================================
 
 export const sheets =
@@ -141,6 +154,10 @@ export const sheets =
     auth: sheetsAuth,
   });
 
+// =====================================================
+// GOOGLE DRIVE CLIENT
+// =====================================================
+
 export const drive =
   google.drive({
     version: "v3",
@@ -148,37 +165,14 @@ export const drive =
   });
 
 // =====================================================
-// ENVIRONMENT VARIABLES
-// =====================================================
-
-const sheetId =
-  process.env.GOOGLE_SHEET_ID;
-
-const driveFolderId =
-  process.env.GOOGLE_DRIVE_FOLDER_ID;
-
-if (!sheetId) {
-  throw new Error(
-    "GOOGLE_SHEET_ID is missing from .env.local"
-  );
-}
-
-if (!driveFolderId) {
-  throw new Error(
-    "GOOGLE_DRIVE_FOLDER_ID is missing from .env.local"
-  );
-}
-
-// =====================================================
 // EXPORT CONFIG
 // =====================================================
 
-export const GOOGLE_SHEET_ID: string =
+export const GOOGLE_SHEET_ID =
   sheetId;
 
-export const GOOGLE_DRIVE_FOLDER_ID: string =
+export const GOOGLE_DRIVE_FOLDER_ID =
   driveFolderId;
 
 export const GOOGLE_SHEET_NAME =
-  process.env.GOOGLE_SHEET_NAME ||
-  "Sheet1";
+  sheetName;
