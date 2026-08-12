@@ -24,11 +24,21 @@ export default function ContactForm() {
     Partial<Record<keyof FormData, string>>
   >({});
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [applicationId, setApplicationId] = useState("");
 
   const updateField = (
     field: keyof FormData,
     value: string
   ) => {
+    if (field === "phone") {
+      value = value.replace(/\D/g, "").slice(0, 10);
+    }
+
+    if (field === "message") {
+      value = value.slice(0, 500);
+    }
+
     setForm((previous) => ({
       ...previous,
       [field]: value,
@@ -62,9 +72,12 @@ export default function ContactForm() {
         "Please enter a valid email address.";
     }
 
-    if (form.phone.trim() && !/^[0-9+\-\s()]{7,20}$/.test(form.phone)) {
+    if (
+      form.phone.trim() &&
+      !/^\d{10}$/.test(form.phone)
+    ) {
       nextErrors.phone =
-        "Please enter a valid phone number.";
+        "Phone number must contain exactly 10 digits.";
     }
 
     if (!form.subject.trim()) {
@@ -75,6 +88,9 @@ export default function ContactForm() {
     if (!form.message.trim()) {
       nextErrors.message =
         "Please enter your message.";
+    } else if (form.message.trim().length > 500) {
+      nextErrors.message =
+        "Message must be 500 characters or less.";
     }
 
     setErrors(nextErrors);
@@ -82,17 +98,59 @@ export default function ContactForm() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
 
     if (!validate()) return;
 
-    /*
-      Backend / email API will be connected here later.
-    */
+    setIsSubmitting(true);
+    setSubmitted(false);
+    setApplicationId("");
 
-    setSubmitted(true);
-    setForm(initialForm);
+    try {
+      const response = await fetch(
+        "/api/contact",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(form),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message ||
+            "Something went wrong while submitting your enquiry."
+        );
+      }
+
+      setApplicationId(
+        result.applicationId || ""
+      );
+      setSubmitted(true);
+      setForm(initialForm);
+      setErrors({});
+    } catch (error) {
+      console.error(
+        "CONTACT FORM SUBMISSION ERROR:",
+        error
+      );
+
+      setErrors({
+        message:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong while submitting your enquiry.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -458,6 +516,7 @@ export default function ContactForm() {
                     )
                   }
                   placeholder="Tell us a little about your enquiry..."
+                  maxLength={500}
                   className={`
                     mt-2
                     w-full
@@ -484,6 +543,18 @@ export default function ContactForm() {
                   `}
                 />
 
+                <div className="mt-1.5 flex justify-end">
+                  <span
+                    className={`text-xs ${
+                      form.message.length >= 450
+                        ? "text-amber-600"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {form.message.length}/500
+                  </span>
+                </div>
+
                 {errors.message && (
                   <p className="mt-1.5 text-xs text-red-500">
                     {errors.message}
@@ -495,6 +566,7 @@ export default function ContactForm() {
 
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="
                   group
                   inline-flex
@@ -517,15 +589,181 @@ export default function ContactForm() {
                   hover:bg-black
                   hover:shadow-xl
                   sm:w-auto
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60
+                  disabled:hover:translate-y-0
                 "
               >
-                Send Enquiry
-
-                <span className="transition-transform duration-300 group-hover:translate-x-1">
-                  →
-                </span>
+                {isSubmitting ? (
+                  <>
+                    <span
+                      className="
+                        h-4
+                        w-4
+                        animate-spin
+                        rounded-full
+                        border-2
+                        border-white/30
+                        border-t-white
+                      "
+                    />
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Send Enquiry</span>
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">
+                      →
+                    </span>
+                  </>
+                )}
               </button>
             </form>
+
+            {submitted && (
+              <div
+                className="
+                  fixed
+                  inset-0
+                  z-[9999]
+                  flex
+                  items-center
+                  justify-center
+                  bg-black/50
+                  px-4
+                  backdrop-blur-sm
+                "
+              >
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="contact-success-dialog-title"
+                  className="
+                    w-full
+                    max-w-md
+                    rounded-3xl
+                    border
+                    border-black/[0.06]
+                    bg-white
+                    p-8
+                    text-center
+                    shadow-2xl
+                  "
+                >
+                  <div
+                    className="
+                      mx-auto
+                      flex
+                      h-16
+                      w-16
+                      items-center
+                      justify-center
+                      rounded-full
+                      bg-green-50
+                      text-3xl
+                      font-bold
+                      text-green-600
+                    "
+                  >
+                    ✓
+                  </div>
+
+                  <h2
+                    id="contact-success-dialog-title"
+                    className="
+                      mt-5
+                      text-2xl
+                      font-bold
+                      tracking-tight
+                      text-gray-950
+                    "
+                  >
+                    Enquiry Submitted Successfully
+                  </h2>
+
+                  <p
+                    className="
+                      mt-3
+                      text-sm
+                      leading-6
+                      text-gray-500
+                    "
+                  >
+                    Thank you for contacting HIKOO.
+                    Our team will review your enquiry
+                    and get back to you.
+                  </p>
+
+                  {applicationId && (
+                    <div
+                      className="
+                        mt-5
+                        rounded-2xl
+                        bg-gray-50
+                        px-4
+                        py-4
+                      "
+                    >
+                      <p
+                        className="
+                          text-xs
+                          font-medium
+                          uppercase
+                          tracking-wider
+                          text-gray-400
+                        "
+                      >
+                        Enquiry ID
+                      </p>
+
+                      <p
+                        className="
+                          mt-1
+                          text-base
+                          font-bold
+                          tracking-wide
+                          text-gray-950
+                        "
+                      >
+                        {applicationId}
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-400">
+                        Please keep this ID for your reference.
+                      </p>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSubmitted(false);
+                      setApplicationId("");
+                    }}
+                    className="
+                      mt-7
+                      inline-flex
+                      w-full
+                      items-center
+                      justify-center
+                      rounded-full
+                      bg-gray-950
+                      px-6
+                      py-3.5
+                      text-sm
+                      font-semibold
+                      text-white
+                      transition-all
+                      duration-300
+                      hover:-translate-y-0.5
+                      hover:bg-black
+                    "
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
