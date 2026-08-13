@@ -187,11 +187,11 @@ export default function AdminDashboardPage() {
 
           {/* Main Grid */}
 
-          <div className="mt-8 grid gap-8 xl:grid-cols-[1.5fr_1fr]">
+          <div className="mt-8 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
 
             {/* Recent Companies */}
 
-            <div className="rounded-3xl border border-black/[0.06] bg-white p-6 shadow-[0_10px_40px_rgba(0,0,0,0.035)] sm:p-7">
+            <div className="rounded-3xl border border-black/[0.06] bg-white p-6 shadow-[0_10px_40px_rgba(0,0,0,0.035)]">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold tracking-tight">
@@ -213,7 +213,7 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="mt-6 overflow-x-auto">
-                <table className="w-full min-w-[620px]">
+                <table className="w-full">
                   <thead>
                     <tr className="border-b border-black/[0.06] text-left">
                       <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
