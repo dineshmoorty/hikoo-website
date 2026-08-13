@@ -8,6 +8,7 @@ import PythonDevelopment from "@/components/home/services/python-development/pyt
 import FullStackDevelopment from "@/components/home/services/full-stack/fullStack";
 import CustomSoftware from "@/components/home/services/custom-software/customSoftware";
 import ServicesCTA from "@/components/home/services/cta/serviceCTA";
+import CyberSecurity from "@/components/home/services/cyberSecurity/cyberSecurity";
 
 export const metadata: Metadata = {
   title: "Service - Software Development Services",
@@ -84,6 +85,7 @@ export default function ServicesPage() {
       <IOSDevelopment />
       <PythonDevelopment />
       <FullStackDevelopment />
+      <CyberSecurity />
       <CustomSoftware />
       <ServicesCTA />
     </main>

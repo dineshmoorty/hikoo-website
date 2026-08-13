@@ -10,6 +10,60 @@ export default function CustomSoftware() {
     <section className="relative overflow-hidden bg-white px-6 py-14 sm:py-16 lg:px-8 lg:py-20">
       <div className="relative mx-auto max-w-full">
         <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+
+          {/* Right Content */}
+
+          <div className="">
+            <span
+              className="
+                inline-flex
+                rounded-full
+                border
+                border-black/[0.06]
+                bg-gray-50
+                px-4
+                py-2
+                text-sm
+                font-medium
+                text-gray-600
+              "
+            >
+              07 · Custom Software Solutions
+            </span>
+
+            <h2
+              className="
+                mt-5
+                text-4xl
+                font-bold
+                leading-tight
+                tracking-tight
+                text-gray-950
+                sm:text-5xl
+              "
+            >
+              Software designed
+              <span
+                className="
+                  block
+                  bg-gradient-to-r
+                  from-violet-700
+                  to-fuchsia-600
+                  bg-clip-text
+                  text-transparent
+                "
+              >
+                around your needs.
+              </span>
+            </h2>
+
+            <p className="mt-5 max-w-xl text-base leading-7 text-gray-600">
+              When an off-the-shelf solution isn't enough, we create
+              custom software around your workflows, requirements,
+              and long-term business goals.
+            </p>
+          </div>
+
           {/* Left Card */}
 
           <div
@@ -83,58 +137,6 @@ export default function CustomSoftware() {
             </div>
           </div>
 
-          {/* Right Content */}
-
-          <div className="order-1 lg:order-2">
-            <span
-              className="
-                inline-flex
-                rounded-full
-                border
-                border-black/[0.06]
-                bg-gray-50
-                px-4
-                py-2
-                text-sm
-                font-medium
-                text-gray-600
-              "
-            >
-              06 · Custom Software Solutions
-            </span>
-
-            <h2
-              className="
-                mt-5
-                text-4xl
-                font-bold
-                leading-tight
-                tracking-tight
-                text-gray-950
-                sm:text-5xl
-              "
-            >
-              Software designed
-              <span
-                className="
-                  block
-                  bg-gradient-to-r
-                  from-violet-700
-                  to-fuchsia-600
-                  bg-clip-text
-                  text-transparent
-                "
-              >
-                around your needs.
-              </span>
-            </h2>
-
-            <p className="mt-5 max-w-xl text-base leading-7 text-gray-600">
-              When an off-the-shelf solution isn't enough, we create
-              custom software around your workflows, requirements,
-              and long-term business goals.
-            </p>
-          </div>
         </div>
       </div>
     </section>

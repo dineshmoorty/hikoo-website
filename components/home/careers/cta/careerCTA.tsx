@@ -133,7 +133,7 @@ export default function CareersCTA() {
 
             <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
-                href="/contact"
+                href="/internship/apply?type=job"
                 className="
                   group
                   inline-flex

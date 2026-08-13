@@ -91,13 +91,13 @@ export default function Header() {
             />
               <span
                 className="px-2
-                  text-2xl
+                  text-xl
                   font-bold
                   tracking-tight
                   text-gray-600
                 "
               >
-                HIKOO
+                HIKOO Technologies
               </span>
           </Link>
 
