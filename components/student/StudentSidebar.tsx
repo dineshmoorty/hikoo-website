@@ -1,158 +1,163 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+
+import {
+  LayoutDashboard,
+  BookOpen,
+  ClipboardCheck,
+  BriefcaseBusiness,
+  Award,
+  CreditCard,
+  UserRound,
+  X,
+  LogOut,
+  GraduationCap,
+} from "lucide-react";
 
 interface StudentSidebarProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
 }
 
 const menuItems = [
   {
-    name: "Dashboard",
+    label: "Dashboard",
     href: "/student/dashboard",
-    icon: "▦",
+    icon: LayoutDashboard,
   },
   {
-    name: "Course",
-    href: "/student/course",
-    icon: "▤",
+    label: "My Courses",
+    href: "/student/dashboard/courses",
+    icon: BookOpen,
   },
   {
-    name: "Attendance",
-    href: "/student/attendance",
-    icon: "✓",
+    label: "Attendance",
+    href: "/student/dashboard/attendance",
+    icon: ClipboardCheck,
   },
   {
-    name: "Certificate",
-    href: "/student/certificate",
-    icon: "◇",
+    label: "Internships",
+    href: "/student/dashboard/internships",
+    icon: BriefcaseBusiness,
   },
   {
-    name: "Fees",
-    href: "/student/fees",
-    icon: "₹",
+    label: "Jobs",
+    href: "/student/dashboard/jobs",
+    icon: GraduationCap,
   },
   {
-    name: "Profile",
-    href: "/student/profile",
-    icon: "♙",
+    label: "Certificates",
+    href: "/student/dashboard/certificates",
+    icon: Award,
+  },
+  {
+    label: "Fees",
+    href: "/student/dashboard/fees",
+    icon: CreditCard,
+  },
+  {
+    label: "Profile",
+    href: "/student/dashboard/profile",
+    icon: UserRound,
   },
 ];
 
 export default function StudentSidebar({
-  isOpen,
+  open,
   onClose,
 }: StudentSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem("hikoo_token");
+    localStorage.removeItem("hikoo_role");
+    localStorage.removeItem("hikoo_name");
+    localStorage.removeItem("hikoo_email");
+
+    router.replace("/student/login");
+  };
+
+  const isActive = (href: string) => {
+    if (href === "/student/dashboard") {
+      return pathname === href;
+    }
+
+    return pathname.startsWith(href);
+  };
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isOpen && (
+      {/* Mobile overlay */}
+      {open && (
         <button
-          type="button"
-          aria-label="Close navigation"
+          aria-label="Close sidebar"
           onClick={onClose}
-          className="
-            fixed
-            inset-0
-            z-40
-            bg-black/30
-            backdrop-blur-sm
-            lg:hidden
-          "
+          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm lg:hidden"
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
-          fixed
-          left-0
-          top-0
-          z-50
-          flex
-          h-screen
-          w-[270px]
-          flex-col
-          border-r
-          border-gray-200
-          bg-white
-          shadow-xl
-          transition-transform
-          duration-300
-          ease-in-out
-
-          lg:relative
-          lg:z-auto
+          fixed left-0 top-0 z-50 h-screen w-72 border-r border-slate-800
+          bg-slate-950 text-white transition-transform duration-300
           lg:translate-x-0
-          lg:shadow-none
-
-          ${
-            isOpen
-              ? "translate-x-0"
-              : "-translate-x-full"
-          }
+          ${open ? "translate-x-0" : "-translate-x-full"}
         `}
       >
         {/* Brand */}
-        <div className="flex h-[100px] shrink-0 items-center justify-between border-b border-gray-100 px-6">
-
+        <div className="flex h-16 items-center justify-between border-b border-white/10 px-5">
           <div className="flex items-center gap-3">
-
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-950 text-sm font-bold text-white shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-sm font-black text-slate-950">
               H
             </div>
 
             <div>
-              <div className="text-lg font-bold text-gray-950">
-                HIKOO
-              </div>
-
-              <div className="text-[11px] font-medium tracking-wide text-gray-400">
-                STUDENT PORTAL
-              </div>
+              <p className="font-bold tracking-tight">HIKOO</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                Student Portal
+              </p>
             </div>
-
           </div>
 
-          {/* Mobile Close */}
           <button
-            type="button"
             onClick={onClose}
-            aria-label="Close navigation"
-            className="
-              flex
-              h-10
-              w-10
-              items-center
-              justify-center
-              rounded-xl
-              border
-              border-gray-200
-              bg-white
-              text-xl
-              text-gray-600
-              transition
-              hover:bg-gray-50
-              lg:hidden
-            "
+            className="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden"
           >
-            ×
+            <X className="h-5 w-5" />
           </button>
         </div>
 
+        {/* Student mini profile */}
+        <div className="mx-4 mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-sm font-bold text-slate-950">
+              S
+            </div>
+
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">
+                Student Portal
+              </p>
+              <p className="text-xs text-slate-500">
+                Learning Dashboard
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Navigation */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-6">
+        <nav className="mt-6 px-3">
+          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-600">
+            Main Menu
+          </p>
 
-          <nav className="space-y-2">
-
+          <div className="space-y-1">
             {menuItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                pathname.startsWith(item.href + "/");
+              const Icon = item.icon;
+              const active = isActive(item.href);
 
               return (
                 <Link
@@ -160,133 +165,42 @@ export default function StudentSidebar({
                   href={item.href}
                   onClick={onClose}
                   className={`
-                    flex
-                    h-12
-                    items-center
-                    gap-4
-                    rounded-xl
-                    px-4
-                    text-sm
-                    font-medium
-                    transition-all
-                    duration-200
-
+                    group flex items-center gap-3 rounded-xl px-3 py-3
+                    text-sm font-medium transition
                     ${
-                      isActive
-                        ? "bg-gray-950 text-white shadow-md"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-950"
+                      active
+                        ? "bg-white text-slate-950 shadow-sm"
+                        : "text-slate-400 hover:bg-white/5 hover:text-white"
                     }
                   `}
                 >
-                  <span
+                  <Icon
                     className={`
-                      flex
-                      w-5
-                      items-center
-                      justify-center
-                      text-sm
-
+                      h-5 w-5
                       ${
-                        isActive
-                          ? "text-white"
-                          : "text-gray-400"
+                        active
+                          ? "text-slate-950"
+                          : "text-slate-500 group-hover:text-white"
                       }
                     `}
-                  >
-                    {item.icon}
-                  </span>
+                  />
 
-                  <span>{item.name}</span>
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
-
-          </nav>
-
-          {/* Divider */}
-          <div className="my-7 border-t border-gray-100" />
-
-          {/* Settings */}
-          <Link
-            href="/student/settings"
-            onClick={onClose}
-            className={`
-              flex
-              h-12
-              items-center
-              gap-4
-              rounded-xl
-              px-4
-              text-sm
-              font-medium
-              transition
-
-              ${
-                pathname.startsWith("/student/settings")
-                  ? "bg-gray-950 text-white"
-                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-950"
-              }
-            `}
-          >
-            <span className="flex w-5 items-center justify-center text-sm">
-              ⚙
-            </span>
-
-            <span>Settings</span>
-          </Link>
-
-          {/* Account */}
-          <div className="mt-auto pt-8">
-
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-
-              <div className="flex items-center gap-3">
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-950 text-sm font-bold text-white">
-                  D
-                </div>
-
-                <div>
-                  <div className="text-sm font-semibold text-gray-950">
-                    Dinesh
-                  </div>
-
-                  <div className="text-xs text-gray-500">
-                    Student
-                  </div>
-                </div>
-
-              </div>
-
-              <button
-                type="button"
-                className="
-                  mt-4
-                  flex
-                  h-11
-                  w-full
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-xl
-                  border
-                  border-gray-200
-                  bg-white
-                  text-sm
-                  font-medium
-                  text-gray-600
-                  transition
-                  hover:bg-gray-950
-                  hover:text-white
-                "
-              >
-                <span>↪</span>
-                Sign out
-              </button>
-
-            </div>
-
           </div>
+        </nav>
+
+        {/* Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 p-4">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-400 transition hover:bg-red-500/10 hover:text-red-400"
+          >
+            <LogOut className="h-5 w-5" />
+            Logout
+          </button>
         </div>
       </aside>
     </>

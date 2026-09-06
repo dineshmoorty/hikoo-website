@@ -1,160 +1,85 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Menu, Bell, ChevronDown } from "lucide-react";
 
-type StudentHeaderProps = {
-  onMenuClick?: () => void;
-};
+interface StudentHeaderProps {
+  onMenuClick: () => void;
+}
 
 export default function StudentHeader({
   onMenuClick,
 }: StudentHeaderProps) {
-  const [notifications, setNotifications] = useState(false);
+  const [name, setName] = useState("Student");
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    setName(localStorage.getItem("hikoo_name") || "Student");
+    setEmail(localStorage.getItem("hikoo_email") || "");
+  }, []);
+
+  const initial = name.charAt(0).toUpperCase();
 
   return (
-    <header
-      className="
-        sticky
-        top-0
-        z-30
-        flex
-        h-[86px]
-        shrink-0
-        items-center
-        justify-between
-        border-b
-        border-black/[0.06]
-        bg-white/95
-        px-5
-        backdrop-blur-md
-        sm:px-7
-        lg:px-10
-      "
-    >
-      {/* Left */}
-      <div className="flex items-center gap-4">
-
-        {/* Mobile Menu */}
-        <button
-          type="button"
-          onClick={onMenuClick}
-          aria-label="Open navigation"
-          className="
-            flex
-            h-11
-            w-11
-            items-center
-            justify-center
-            rounded-xl
-            border
-            border-black/[0.08]
-            bg-white
-            text-gray-700
-            transition
-            hover:bg-gray-50
-            lg:hidden
-          "
-        >
-          <span className="text-2xl leading-none">
-            ☰
-          </span>
-        </button>
-
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
-            Student Portal
-          </p>
-
-          <h1 className="mt-1 text-lg font-semibold text-gray-950 sm:text-xl">
-            Student Dashboard
-          </h1>
-        </div>
-
-      </div>
-
-      {/* Right */}
-      <div className="flex items-center gap-3 sm:gap-5">
-
-        {/* Notifications */}
-        <div className="relative">
-
+    <header className="sticky top-0 z-40 h-16 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="flex h-full items-center justify-between px-4 sm:px-6">
+        {/* Left */}
+        <div className="flex items-center gap-3">
           <button
-            type="button"
-            onClick={() => setNotifications((prev) => !prev)}
-            aria-label="Notifications"
-            className="
-              relative
-              flex
-              h-11
-              w-11
-              items-center
-              justify-center
-              rounded-xl
-              border
-              border-black/[0.07]
-              bg-white
-              text-gray-600
-              transition
-              hover:bg-gray-50
-            "
+            onClick={onMenuClick}
+            className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+            aria-label="Open menu"
           >
-            <span className="text-lg">
-              ♧
-            </span>
-
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-600" />
+            <Menu className="h-6 w-6" />
           </button>
 
-          {notifications && (
-            <div
-              className="
-                absolute
-                right-0
-                top-14
-                z-50
-                w-72
-                rounded-2xl
-                border
-                border-black/[0.06]
-                bg-white
-                p-4
-                shadow-[0_20px_50px_rgba(0,0,0,0.12)]
-              "
-            >
-              <p className="text-sm font-semibold text-gray-950">
-                Notifications
-              </p>
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950 text-sm font-bold text-white">
+              H
+            </div>
 
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                No new notifications.
+            <div className="hidden sm:block">
+              <p className="text-sm font-bold text-slate-950">
+                HIKOO
+              </p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                Student Portal
               </p>
             </div>
-          )}
-
+          </div>
         </div>
 
-        {/* Divider */}
-        <div className="hidden h-9 w-px bg-black/[0.08] sm:block" />
-
-        {/* Student */}
+        {/* Right */}
         <div className="flex items-center gap-3">
+          <button
+            className="relative rounded-xl p-2.5 text-slate-500 hover:bg-slate-100"
+            aria-label="Notifications"
+          >
+            <Bell className="h-5 w-5" />
 
-          <div className="hidden text-right sm:block">
-            <p className="text-sm font-semibold text-gray-950">
-              Dinesh
-            </p>
+            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+          </button>
 
-            <p className="text-xs text-gray-400">
-              STUDENT
-            </p>
+          <div className="hidden h-8 w-px bg-slate-200 sm:block" />
+
+          <div className="flex items-center gap-3">
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-semibold text-slate-900">
+                {name}
+              </p>
+
+              <p className="max-w-[180px] truncate text-xs text-slate-400">
+                {email}
+              </p>
+            </div>
+
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">
+              {initial}
+            </div>
+
+            <ChevronDown className="hidden h-4 w-4 text-slate-400 sm:block" />
           </div>
-
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-950 text-sm font-semibold text-white shadow-sm">
-            D
-          </div>
-
         </div>
-
       </div>
     </header>
   );
