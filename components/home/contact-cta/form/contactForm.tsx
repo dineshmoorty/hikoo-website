@@ -230,7 +230,7 @@ export default function ContactForm() {
               </a>
 
               <a
-                href="mailto:hikootechnology@gmail.com"
+                href="mailto:contact@hikoo.in"
                 className="
                   mt-1
                   block
@@ -241,7 +241,7 @@ export default function ContactForm() {
                   hover:text-blue-700
                 "
               >
-                hikootechnology@gmail.com
+                contact@hikoo.in
               </a>
             </div>
           </div>

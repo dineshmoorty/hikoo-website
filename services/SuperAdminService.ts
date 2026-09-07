@@ -244,6 +244,8 @@ export interface Employee {
   name: string;
   email: string;
 
+  role: string;
+
   designation: string | null;
   specialization: string | null;
   department: string | null;

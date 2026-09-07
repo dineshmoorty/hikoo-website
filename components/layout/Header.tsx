@@ -10,12 +10,16 @@ const navItems = [
     href: "/",
   },
   {
-    name: "About",
-    href: "/about",
+    name: "Products",
+    href: "/products",
   },
   {
     name: "Services",
     href: "/services",
+  },
+  {
+    name: "Clients",
+    href: "/clients",
   },
   {
     name: "Internship",
@@ -24,6 +28,10 @@ const navItems = [
   {
     name: "Careers",
     href: "/careers",
+  },
+  {
+    name: "About",
+    href: "/about",
   },
   {
     name: "Contact",

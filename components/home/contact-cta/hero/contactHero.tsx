@@ -8,8 +8,8 @@ const contactDetails = [
   },
   {
     label: "Email",
-    value: "hikootechnology@gmail.com",
-    href: "mailto:hikootechnology@gmail.com",
+    value: "contact@hikoo.in",
+    href: "mailto:contact@hikoo.in",
   },
   {
     label: "Visit Us",

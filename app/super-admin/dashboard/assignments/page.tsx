@@ -600,7 +600,7 @@ export default function SuperAdminAssignmentsPage() {
                           <div className="flex items-center justify-end gap-2">
 
                             <select
-                              value={selectedEmployeeId}
+                              value={selectedEmployeeId ?? ""}
                               onChange={(event) =>
                                 handleEmployeeChange(
                                   enrollment.id,
@@ -619,7 +619,7 @@ export default function SuperAdminAssignmentsPage() {
                                 (employee) => (
                                   <option
                                     key={employee.id}
-                                    value={employee.id}
+                                    value={employee.id ?? ""}
                                   >
                                     {employee.name}
                                   </option>
@@ -765,7 +765,7 @@ export default function SuperAdminAssignmentsPage() {
                       <div className="flex gap-2">
 
                         <select
-                          value={selectedEmployeeId}
+                          value={selectedEmployeeId ?? ""}
                           onChange={(event) =>
                             handleEmployeeChange(
                               enrollment.id,
@@ -782,7 +782,7 @@ export default function SuperAdminAssignmentsPage() {
                             (employee) => (
                               <option
                                 key={employee.id}
-                                value={employee.id}
+                                value={employee.id ?? ""}
                               >
                                 {employee.name}
                               </option>
