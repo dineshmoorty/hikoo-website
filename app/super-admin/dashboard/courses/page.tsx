@@ -1,6 +1,19 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  BookOpen,
+  Check,
+  ChevronRight,
+  Clock3,
+  Edit3,
+  IndianRupee,
+  Plus,
+  Power,
+  Search,
+  X,
+} from "lucide-react";
 import {
   Course,
   CreateCourseRequest,
@@ -10,62 +23,91 @@ import {
   updateCourseStatus,
 } from "@/services/CourseService";
 
+const emptyForm: CreateCourseRequest = {
+  name: "",
+  code: "",
+  description: "",
+  duration: "",
+  baseFee: 0,
+  gstPercentage: 0,
+};
+
 export default function CoursesPage() {
+  const router = useRouter();
+
   const [courses, setCourses] = useState<Course[]>([]);
+  const [form, setForm] = useState<CreateCourseRequest>(emptyForm);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  const [showModal, setShowModal] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-
-  const [search, setSearch] = useState("");
-
-  const [form, setForm] = useState<CreateCourseRequest>({
-    name: "",
-    code: "",
-    description: "",
-    duration: "",
-  });
-
+  const [statusId, setStatusId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  useEffect(() => {
-    loadCourses();
-  }, []);
 
   async function loadCourses() {
     try {
       setLoading(true);
       setError("");
 
+      const token = localStorage.getItem("hikoo_token");
+      const role = localStorage.getItem("hikoo_role");
+
+      if (!token || role !== "SUPER_ADMIN") {
+        router.replace("/super-admin/login");
+        return;
+      }
+
       const data = await getCourses();
-      setCourses(data);
+
+      setCourses(
+        [...data].sort(
+          (a, b) => a.courseOrder - b.courseOrder
+        )
+      );
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to load courses"
+        err instanceof Error
+          ? err.message
+          : "Unable to load courses."
       );
     } finally {
       setLoading(false);
     }
   }
 
-  function openCreateModal() {
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  const filteredCourses = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    if (!q) return courses;
+
+    return courses.filter((course) =>
+      [
+        course.name,
+        course.code ?? "",
+        course.description ?? "",
+        course.duration ?? "",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [courses, search]);
+
+  function openCreate() {
     setEditingCourse(null);
-
-    setForm({
-      name: "",
-      code: "",
-      description: "",
-      duration: "",
-    });
-
+    setForm(emptyForm);
     setError("");
     setSuccess("");
     setShowModal(true);
   }
 
-  function openEditModal(course: Course) {
+  function openEdit(course: Course) {
     setEditingCourse(course);
 
     setForm({
@@ -73,6 +115,8 @@ export default function CoursesPage() {
       code: course.code ?? "",
       description: course.description ?? "",
       duration: course.duration ?? "",
+      baseFee: Number(course.baseFee ?? 0),
+      gstPercentage: Number(course.gstPercentage ?? 0),
     });
 
     setError("");
@@ -84,474 +128,591 @@ export default function CoursesPage() {
     if (saving) return;
 
     setShowModal(false);
-    setEditingCourse(null);
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
+    setError("");
+    setSuccess("");
+
     if (!form.name.trim()) {
-      setError("Course name is required");
+      setError("Course name is required.");
+      return;
+    }
+
+    if (form.baseFee < 0) {
+      setError("Base fee cannot be negative.");
+      return;
+    }
+
+    if (
+      form.gstPercentage < 0 ||
+      form.gstPercentage > 100
+    ) {
+      setError("GST must be between 0% and 100%.");
       return;
     }
 
     try {
       setSaving(true);
-      setError("");
-      setSuccess("");
 
       if (editingCourse) {
         await updateCourse(editingCourse.id, {
-          ...form,
+          name: form.name.trim(),
+          code: form.code.trim(),
+          description: form.description.trim(),
+          duration: form.duration.trim(),
+          baseFee: Number(form.baseFee),
+          gstPercentage: Number(form.gstPercentage),
           active: editingCourse.active,
         });
 
-        setSuccess("Course updated successfully");
+        setSuccess("Course updated successfully.");
       } else {
-        await createCourse(form);
+        await createCourse({
+          name: form.name.trim(),
+          code: form.code.trim(),
+          description: form.description.trim(),
+          duration: form.duration.trim(),
+          baseFee: Number(form.baseFee),
+          gstPercentage: Number(form.gstPercentage),
+        });
 
-        setSuccess("Course created successfully");
+        setSuccess("Course created successfully.");
       }
 
-      await loadCourses();
+      setShowModal(false);
+      setForm(emptyForm);
+      setEditingCourse(null);
 
-      setTimeout(() => {
-        setShowModal(false);
-        setEditingCourse(null);
-        setSuccess("");
-      }, 700);
+      await loadCourses();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Something went wrong"
+        err instanceof Error
+          ? err.message
+          : "Unable to save course."
       );
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleStatusChange(course: Course) {
+  async function toggleStatus(course: Course) {
     try {
+      setStatusId(course.id);
       setError("");
       setSuccess("");
 
-      await updateCourseStatus(course.id, !course.active);
-
-      setCourses((current) =>
-        current.map((item) =>
-          item.id === course.id
-            ? { ...item, active: !item.active }
-            : item
-        )
+      await updateCourseStatus(
+        course.id,
+        !course.active
       );
 
       setSuccess(
-        `${course.name} is now ${
-          !course.active ? "active" : "inactive"
-        }`
+        course.active
+          ? `${course.name} deactivated.`
+          : `${course.name} activated.`
       );
 
-      setTimeout(() => setSuccess(""), 2000);
+      await loadCourses();
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to update course status"
+          : "Unable to update course status."
       );
+    } finally {
+      setStatusId(null);
     }
   }
 
-  const filteredCourses = courses.filter((course) => {
-    const query = search.toLowerCase().trim();
+  const activeCount = courses.filter(
+    (course) => course.active
+  ).length;
 
-    if (!query) return true;
-
-    return (
-      course.name.toLowerCase().includes(query) ||
-      (course.code ?? "").toLowerCase().includes(query) ||
-      (course.description ?? "").toLowerCase().includes(query)
-    );
-  });
+  const inactiveCount =
+    courses.length - activeCount;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
+    <div className="mx-auto max-w-7xl">
+      {/* HEADER */}
+      <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-medium text-gray-400">
+            Management
+          </p>
 
-        {/* Header */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-indigo-600">
-              Super Admin
-            </p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-gray-950">
+            Courses
+          </h1>
 
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Courses
-            </h1>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Create and manage HIKOO courses.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-          >
-            <span className="mr-2 text-lg">+</span>
-            Add Course
-          </button>
+          <p className="mt-2 text-sm text-gray-500">
+            Create, price and manage the courses available across HIKOO.
+          </p>
         </div>
 
-        {/* Alerts */}
-        {error && (
-          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+        <button
+          onClick={openCreate}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800"
+        >
+          <Plus className="h-4 w-4" />
+          Add Course
+        </button>
+      </div>
 
-        {success && (
-          <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {success}
-          </div>
-        )}
+      {/* STATS */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-gray-500">
+            Total Courses
+          </p>
 
-        {/* Search */}
-        <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="mt-2 text-3xl font-semibold text-gray-950">
+            {courses.length}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+          <p className="text-sm text-emerald-700">
+            Active
+          </p>
+
+          <p className="mt-2 text-3xl font-semibold text-emerald-900">
+            {activeCount}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+          <p className="text-sm text-gray-500">
+            Inactive
+          </p>
+
+          <p className="mt-2 text-3xl font-semibold text-gray-700">
+            {inactiveCount}
+          </p>
+        </div>
+      </div>
+
+      {/* ERROR */}
+      {error && !showModal && (
+        <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* SUCCESS */}
+      {success && !showModal && (
+        <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {success}
+        </div>
+      )}
+
+      {/* SEARCH */}
+      <div className="mb-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="relative max-w-xl">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+
           <input
-            type="text"
-            placeholder="Search courses..."
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+            placeholder="Search courses..."
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-gray-400 focus:bg-white"
           />
         </div>
+      </div>
 
-        {/* Content */}
+      {/* COURSE LIST */}
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600" />
-            <p className="mt-3 text-sm text-slate-500">
-              Loading courses...
-            </p>
+          <div className="flex min-h-72 items-center justify-center">
+            <div className="text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
+
+              <p className="mt-3 text-sm text-gray-500">
+                Loading courses...
+              </p>
+            </div>
           </div>
         ) : filteredCourses.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-            <div className="text-4xl">📚</div>
+          <div className="flex min-h-72 flex-col items-center justify-center px-6 text-center">
+            <div className="rounded-2xl bg-gray-100 p-4">
+              <BookOpen className="h-7 w-7 text-gray-500" />
+            </div>
 
-            <h2 className="mt-3 text-lg font-semibold text-slate-900">
+            <h3 className="mt-4 font-semibold text-gray-950">
               No courses found
-            </h2>
+            </h3>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-gray-500">
               {search
-                ? "Try a different search."
-                : "Create your first HIKOO course."}
+                ? "Try another search."
+                : "Create your first course."}
             </p>
-
-            {!search && (
-              <button
-                type="button"
-                onClick={openCreateModal}
-                className="mt-5 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
-              >
-                Add Course
-              </button>
-            )}
           </div>
         ) : (
-          <>
-            {/* Desktop */}
-            <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[850px]">
-                  <thead className="border-b border-slate-200 bg-slate-50">
-                    <tr>
-                      <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Course
-                      </th>
+          <div className="divide-y divide-gray-100">
+            {filteredCourses.map((course) => {
+              const fee = Number(
+                course.baseFee ?? 0
+              );
 
-                      <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Code
-                      </th>
+              const gst = Number(
+                course.gstPercentage ?? 0
+              );
 
-                      <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Duration
-                      </th>
+              // Backend-calculated total fee
+              const total = Number(
+                course.totalFee ?? 0
+              );
 
-                      <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Status
-                      </th>
-
-                      <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredCourses.map((course) => (
-                      <tr
-                        key={course.id}
-                        className="transition hover:bg-slate-50"
-                      >
-                        <td className="px-5 py-4">
-                          <div className="font-semibold text-slate-900">
-                            {course.name}
-                          </div>
-
-                          {course.description && (
-                            <div className="mt-1 max-w-md truncate text-sm text-slate-500">
-                              {course.description}
-                            </div>
-                          )}
-                        </td>
-
-                        <td className="px-5 py-4 text-sm font-medium text-slate-700">
-                          {course.code || "—"}
-                        </td>
-
-                        <td className="px-5 py-4 text-sm text-slate-600">
-                          {course.duration || "—"}
-                        </td>
-
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                              course.active
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-slate-100 text-slate-600"
-                            }`}
-                          >
-                            {course.active ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-
-                        <td className="px-5 py-4">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(course)}
-                              className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
-                            >
-                              Edit
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleStatusChange(course)
-                              }
-                              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                                course.active
-                                  ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                                  : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                              }`}
-                            >
-                              {course.active
-                                ? "Deactivate"
-                                : "Activate"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Mobile */}
-            <div className="space-y-4 md:hidden">
-              {filteredCourses.map((course) => (
+              return (
                 <div
                   key={course.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                  className="p-5 transition hover:bg-gray-50/70 sm:p-6"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="font-semibold text-slate-900">
-                        {course.name}
-                      </h2>
+                  <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+                    {/* COURSE INFO */}
+                    <div className="flex min-w-0 items-start gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-950 text-sm font-bold text-white">
+                        {course.courseOrder}
+                      </div>
 
-                      <p className="mt-1 text-xs font-medium text-indigo-600">
-                        {course.code || "No code"}
-                      </p>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="truncate text-lg font-semibold text-gray-950">
+                            {course.name}
+                          </h2>
+
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              course.active
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-gray-100 text-gray-500"
+                            }`}
+                          >
+                            {course.active
+                              ? "Active"
+                              : "Inactive"}
+                          </span>
+                        </div>
+
+                        <p className="mt-1 text-sm font-medium text-gray-500">
+                          {course.code ||
+                            "No course code"}
+                        </p>
+
+                        {course.description && (
+                          <p className="mt-2 line-clamp-2 max-w-2xl text-sm text-gray-500">
+                            {course.description}
+                          </p>
+                        )}
+
+                        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-500">
+                          {/* DURATION */}
+                          <span className="inline-flex items-center gap-1.5">
+                            <Clock3 className="h-4 w-4" />
+
+                            {course.duration ||
+                              "Duration not set"}
+                          </span>
+
+                          {/* BASE FEE */}
+                          <span className="inline-flex items-center gap-1.5">
+                            <IndianRupee className="h-4 w-4" />
+
+                            ₹
+                            {fee.toLocaleString(
+                              "en-IN"
+                            )}
+                          </span>
+
+                          {/* GST */}
+                          <span>
+                            GST {gst}%
+                          </span>
+
+                          {/* BACKEND TOTAL */}
+                          <span className="font-medium text-gray-700">
+                            Total ₹
+                            {total.toLocaleString(
+                              "en-IN"
+                            )}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    <span
-                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-                        course.active
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {course.active ? "Active" : "Inactive"}
-                    </span>
-                  </div>
+                    {/* ACTIONS */}
+                    <div className="flex flex-wrap gap-2 xl:justify-end">
+                      <button
+                        onClick={() =>
+                          router.push(
+                            `/super-admin/courses/${course.id}/modules`
+                          )
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-white"
+                      >
+                        Manage Modules
 
-                  {course.description && (
-                    <p className="mt-4 text-sm leading-6 text-slate-500">
-                      {course.description}
-                    </p>
-                  )}
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
 
-                  <div className="mt-4 border-t border-slate-100 pt-4">
-                    <div className="text-xs text-slate-400">
-                      Duration
+                      <button
+                        onClick={() =>
+                          openEdit(course)
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-white"
+                      >
+                        <Edit3 className="h-4 w-4" />
+
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          toggleStatus(course)
+                        }
+                        disabled={
+                          statusId === course.id
+                        }
+                        className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
+                          course.active
+                            ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            : "bg-gray-950 text-white hover:bg-gray-800"
+                        }`}
+                      >
+                        <Power className="h-4 w-4" />
+
+                        {statusId === course.id
+                          ? "Saving..."
+                          : course.active
+                            ? "Deactivate"
+                            : "Activate"}
+                      </button>
                     </div>
-
-                    <div className="mt-1 text-sm font-medium text-slate-700">
-                      {course.duration || "—"}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(course)}
-                      className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleStatusChange(course)
-                      }
-                      className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold ${
-                        course.active
-                          ? "bg-amber-50 text-amber-700"
-                          : "bg-emerald-50 text-emerald-700"
-                      }`}
-                    >
-                      {course.active ? "Deactivate" : "Activate"}
-                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </>
+              );
+            })}
+          </div>
         )}
       </div>
 
-      {/* Modal */}
+      {/* CREATE / EDIT MODAL */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
-
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            {/* MODAL HEADER */}
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  {editingCourse ? "Edit Course" : "Create Course"}
-                </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  {editingCourse
-                    ? "Update course information."
-                    : "Add a new course to HIKOO."}
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Course Management
                 </p>
+
+                <h2 className="mt-1 text-xl font-semibold text-gray-950">
+                  {editingCourse
+                    ? "Edit Course"
+                    : "Add Course"}
+                </h2>
               </div>
 
               <button
-                type="button"
                 onClick={closeModal}
-                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
               >
-                ✕
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5 p-6">
-
+            {/* FORM */}
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-5 p-6"
+            >
               {error && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                   {error}
                 </div>
               )}
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Course Name
-                </label>
+              {/* NAME + CODE */}
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field
+                  label="Course Name"
+                  required
+                >
+                  <input
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        name: e.target.value,
+                      })
+                    }
+                    placeholder="Java FullStack Development"
+                    className={inputClass}
+                  />
+                </Field>
 
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      name: event.target.value,
-                    })
-                  }
-                  placeholder="Java Full Stack Development"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-                />
+                <Field label="Course Code">
+                  <input
+                    value={form.code}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        code: e.target.value,
+                      })
+                    }
+                    placeholder="JAVA-FS"
+                    className={inputClass}
+                  />
+                </Field>
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Course Code
-                </label>
-
-                <input
-                  type="text"
-                  value={form.code}
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      code: event.target.value,
-                    })
-                  }
-                  placeholder="JAVA-FS"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm uppercase outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Duration
-                </label>
-
-                <input
-                  type="text"
-                  value={form.duration}
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      duration: event.target.value,
-                    })
-                  }
-                  placeholder="6 Months"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Description
-                </label>
-
+              {/* DESCRIPTION */}
+              <Field label="Description">
                 <textarea
                   value={form.description}
-                  onChange={(event) =>
+                  onChange={(e) =>
                     setForm({
                       ...form,
-                      description: event.target.value,
+                      description:
+                        e.target.value,
                     })
                   }
                   placeholder="Describe the course..."
                   rows={4}
-                  className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  className={`${inputClass} resize-none`}
                 />
+              </Field>
+
+              {/* DURATION + FEES */}
+              <div className="grid gap-5 sm:grid-cols-3">
+                <Field label="Duration">
+                  <input
+                    value={form.duration}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        duration:
+                          e.target.value,
+                      })
+                    }
+                    placeholder="6 Months"
+                    className={inputClass}
+                  />
+                </Field>
+
+                <Field
+                  label="Base Fee (₹)"
+                  required
+                >
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.baseFee}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        baseFee: Number(
+                          e.target.value
+                        ),
+                      })
+                    }
+                    className={inputClass}
+                  />
+                </Field>
+
+                <Field
+                  label="GST (%)"
+                  required
+                >
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={form.gstPercentage}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        gstPercentage:
+                          Number(
+                            e.target.value
+                          ),
+                      })
+                    }
+                    className={inputClass}
+                  />
+                </Field>
               </div>
 
-              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+              {/* FEE PREVIEW */}
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">
+                    Base Fee
+                  </span>
+
+                  <span className="font-medium text-gray-900">
+                    ₹
+                    {Number(
+                      form.baseFee || 0
+                    ).toLocaleString("en-IN")}
+                  </span>
+                </div>
+
+                <div className="mt-2 flex justify-between">
+                  <span className="text-gray-500">
+                    GST
+                  </span>
+
+                  <span className="font-medium text-gray-900">
+                    {Number(
+                      form.gstPercentage || 0
+                    )}
+                    %
+                  </span>
+                </div>
+
+                <div className="mt-3 flex justify-between border-t border-gray-200 pt-3">
+                  <span className="font-semibold text-gray-900">
+                    Estimated Total
+                  </span>
+
+                  <span className="font-semibold text-gray-950">
+                    ₹
+                    {(
+                      Number(
+                        form.baseFee || 0
+                      ) +
+                      Number(
+                        form.baseFee || 0
+                      ) *
+                        (Number(
+                          form.gstPercentage ||
+                            0
+                        ) /
+                          100)
+                    ).toLocaleString(
+                      "en-IN"
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* FORM BUTTONS */}
+              <div className="flex justify-end gap-3 border-t border-gray-100 pt-5">
                 <button
                   type="button"
                   onClick={closeModal}
-                  disabled={saving}
-                  className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
@@ -559,20 +720,49 @@ export default function CoursesPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
                 >
+                  <Check className="h-4 w-4" />
+
                   {saving
                     ? "Saving..."
                     : editingCourse
-                    ? "Save Changes"
-                    : "Create Course"}
+                      ? "Save Changes"
+                      : "Create Course"}
                 </button>
               </div>
-
             </form>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+const inputClass =
+  "w-full rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100";
+
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-medium text-gray-700">
+        {label}{" "}
+        {required && (
+          <span className="text-red-500">
+            *
+          </span>
+        )}
+      </span>
+
+      {children}
+    </label>
   );
 }

@@ -11,36 +11,50 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
+
+  {
+    label: "Profile",
+    href: "/admin/dashboard/profile",
+    icon: "👤",
+  },
   {
     label: "Dashboard",
     href: "/admin/dashboard",
     icon: "⌂",
   },
+
   {
     label: "Employees",
-    href: "/admin/employees",
+    href: "/admin/dashboard/employees",
     icon: "▣",
   },
   {
     label: "Students",
-    href: "/admin/students",
+    href: "/admin/dashboard/students",
     icon: "♢",
   },
   {
-    label: "Assignments",
-    href: "/admin/assignments",
-    icon: "♧",
-  },
-  {
     label: "Courses",
-    href: "/admin/courses",
+    href: "/admin/dashboard/courses",
     icon: "▤",
   },
   {
+    label: "Coupons",
+    href: "/admin/dashboard/coupons",
+    icon: "🏷️",
+  },
+  {
+    label: "Assignments",
+    href: "/admin/dashboard/assignments",
+    icon: "♧",
+  },
+  {
     label: "Attendance",
-    href: "/admin/attendance",
+    href: "/admin/dashboard/attendance",
     icon: "✓",
   },
+
+
 ];
 
 export default function AdminSidebar() {
@@ -194,14 +208,14 @@ export default function AdminSidebar() {
           {/* =================================================
               ACCOUNT
           ================================================== */}
-          <div className="my-7 border-t border-slate-100" />
+          {/* <div className="my-7 border-t border-slate-100" />
 
           <p className="mb-4 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
             Account
           </p>
 
           <Link
-            href="/admin/profile"
+            href="/admin/dashboard/profile"
             className={`
               group
               flex
@@ -214,7 +228,7 @@ export default function AdminSidebar() {
               font-medium
               transition
               ${
-                isActive("/admin/profile")
+                isActive("/admin/dashboard/profile")
                   ? "bg-[#0b1220] text-white"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
               }
@@ -252,7 +266,7 @@ export default function AdminSidebar() {
             </span>
 
             <span>Settings</span>
-          </Link>
+          </Link> */}
         </nav>
 
         {/* ===================================================
@@ -427,7 +441,7 @@ export default function AdminSidebar() {
 
           <button
             type="button"
-            onClick={() => navigate("/admin/profile")}
+            onClick={() => navigate("/admin/dashboard/profile")}
             className="flex w-full items-center gap-4 rounded-xl px-4 py-3 text-left text-sm font-medium text-slate-600 hover:bg-slate-50"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50">

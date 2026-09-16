@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginUser } from "@/services/AuthService";
+import { getMyAdminProfile } from "@/services/AdminProfileService";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -58,10 +59,23 @@ export default function AdminLoginPage() {
       localStorage.setItem("hikoo_email", response.email);
 
       // ---------------------------------------------
-      // ADMIN DASHBOARD
+      // ADMIN PROFILE GATE
       // ---------------------------------------------
 
-      router.replace("/admin/dashboard");
+      const profile = await getMyAdminProfile();
+
+      if (profile.profileCompleted) {
+        localStorage.setItem(
+          "hikoo_admin_profile_completed",
+          "true"
+        );
+        router.replace("/admin/dashboard");
+      } else {
+        localStorage.removeItem(
+          "hikoo_admin_profile_completed"
+        );
+        router.replace("/admin/dashboard/profile");
+      }
     } catch (err) {
       console.error(err);
 

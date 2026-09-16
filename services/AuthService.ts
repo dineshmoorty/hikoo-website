@@ -13,9 +13,12 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   token: string;
-  role: string;
+  tokenType: string;
+  userId: number;
   name: string;
   email: string;
+  role: string;
+  profileCompleted: boolean;
 }
 
 /**

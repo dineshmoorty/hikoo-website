@@ -117,16 +117,21 @@ public class EmployeeStudentService {
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
+
                 profile != null ? profile.getPhone() : null,
-                profile != null ? profile.getCourse() : null,
+
+                // Academic identity
+                profile != null ? profile.getInstitutionName() : null,
+                profile != null ? profile.getRegisterNumber() : null,
+
                 profile != null ? profile.getProgram() : null,
-                profile != null ? profile.getInternshipDuration() : null,
-                profile != null ? profile.getCourseDuration() : null,
+
                 profile != null ? profile.getAddress() : null,
                 profile != null ? profile.getCity() : null,
                 profile != null ? profile.getState() : null,
                 profile != null ? profile.getPincode() : null,
-                profile != null && profile.getProfileCompleted(),
+
+                profile != null && Boolean.TRUE.equals(profile.getProfileCompleted()),
                 user.getActive()
         );
     }

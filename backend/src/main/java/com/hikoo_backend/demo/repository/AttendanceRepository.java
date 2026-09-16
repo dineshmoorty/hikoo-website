@@ -23,4 +23,12 @@ public interface AttendanceRepository
             Long enrollmentId,
             LocalDate attendanceDate
     );
+
+    boolean existsByEnrollmentIdAndAttendanceDateAndIdNot(
+            Long enrollmentId,
+            LocalDate attendanceDate,
+            Long id
+    );
+
+    List<Attendance> findAllByOrderByAttendanceDateDescIdDesc();
 }

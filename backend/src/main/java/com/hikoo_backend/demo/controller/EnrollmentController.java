@@ -144,4 +144,19 @@ public class EnrollmentController {
     ) {
         return enrollmentService.getEnrollment(id);
     }
+
+    // =========================================================
+    // EMPLOYEE - COMPLETE COURSE
+    // =========================================================
+
+    @PatchMapping("/{id}/complete")
+    public EnrollmentResponse completeCourse(
+            Authentication authentication,
+            @PathVariable Long id
+    ) {
+        return enrollmentService.completeCourse(
+                authentication.getName(),
+                id
+        );
+    }
 }

@@ -118,13 +118,13 @@ export default function SuperAdminDashboardPage() {
             </p>
           </div>
 
-          <button
+          {/* <button
             onClick={() => router.push("/super-admin/dashboard/students")}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800"
           >
             <span className="text-lg leading-none">+</span>
             Add Student
-          </button>
+          </button> */}
         </div>
       </div>
 

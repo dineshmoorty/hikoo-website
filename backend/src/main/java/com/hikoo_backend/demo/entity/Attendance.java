@@ -62,6 +62,13 @@ public class Attendance {
     private String remarks;
 
     // =========================================================
+    // ACTIVE / INACTIVE
+    // =========================================================
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean active = true;
+
+    // =========================================================
     // CREATED / UPDATED
     // =========================================================
 

@@ -17,12 +17,18 @@ export interface Enrollment {
 
   active: boolean;
 
+  // Course lifecycle
+  completed: boolean;
+  completedAt: string | null;
+
   enrolledAt: string;
   assignedAt: string | null;
 }
 
 export interface CreateEnrollmentRequest {
   courseId: number;
+  startDate: string;
+  couponCode?: string;
 }
 
 export interface AssignEmployeeRequest {
@@ -39,9 +45,13 @@ function getToken() {
   return token;
 }
 
+// =========================================================
+// STUDENT
+// =========================================================
+
 // Student → enroll in course
 export async function enrollInCourse(
-  courseId: number
+  request: CreateEnrollmentRequest
 ): Promise<Enrollment> {
   const token = getToken();
 
@@ -52,7 +62,13 @@ export async function enrollInCourse(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      courseId,
+      courseId: request.courseId,
+      startDate: request.startDate,
+      ...(request.couponCode
+        ? {
+            couponCode: request.couponCode.trim().toUpperCase(),
+          }
+        : {}),
     }),
   });
 }
@@ -68,6 +84,10 @@ export async function getMyEnrollments(): Promise<Enrollment[]> {
     },
   });
 }
+
+// =========================================================
+// ADMIN / SUPER ADMIN
+// =========================================================
 
 // Admin / Super Admin → all enrollments
 export async function getAllEnrollments(): Promise<Enrollment[]> {
@@ -103,18 +123,26 @@ export async function assignEmployee(
   );
 }
 
-// Employee → assigned students only
+// =========================================================
+// EMPLOYEE
+// =========================================================
+
+// Employee → assigned students
 export async function getMyAssignedStudents(): Promise<Enrollment[]> {
   const token = getToken();
 
-  return apiRequest<Enrollment[]>("/api/enrollments/my-assigned", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  return apiRequest<Enrollment[]>(
+    "/api/enrollments/my-assigned",
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 }
 
+// Employee → specific assigned student
 export async function getMyAssignedStudent(
   studentId: number
 ): Promise<Enrollment> {
@@ -124,6 +152,23 @@ export async function getMyAssignedStudent(
     `/api/enrollments/my-assigned/student/${studentId}`,
     {
       method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+}
+
+// Employee → complete course
+export async function completeCourse(
+  enrollmentId: number
+): Promise<Enrollment> {
+  const token = getToken();
+
+  return apiRequest<Enrollment>(
+    `/api/enrollments/${enrollmentId}/complete`,
+    {
+      method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
       },

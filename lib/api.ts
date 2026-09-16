@@ -9,30 +9,48 @@ export async function apiRequest<T>(
 
   const headers = new Headers(options.headers);
 
-  // Always tell backend that we expect JSON
+  // ------------------------------------------------------------
+  // DEFAULT HEADERS
+  // ------------------------------------------------------------
+
   if (!headers.has("Accept")) {
     headers.set("Accept", "application/json");
   }
 
-  // Automatically set JSON content type when a request has a body
-  // and the caller has not already provided a Content-Type.
   if (options.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
-  console.log("API REQUEST:", {
-    method: options.method || "GET",
-    url,
-    headers: Object.fromEntries(headers.entries()),
-    body: options.body,
-  });
+  // ------------------------------------------------------------
+  // JWT AUTHORIZATION
+  // ------------------------------------------------------------
+
+  if (
+    typeof window !== "undefined" &&
+    !headers.has("Authorization")
+  ) {
+    const token = localStorage.getItem("hikoo_token");
+
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+  }
+
+  // ------------------------------------------------------------
+  // REQUEST
+  // ------------------------------------------------------------
 
   const response = await fetch(url, {
     ...options,
     headers,
   });
 
-  const contentType = response.headers.get("content-type") || "";
+  // ------------------------------------------------------------
+  // RESPONSE
+  // ------------------------------------------------------------
+
+  const contentType =
+    response.headers.get("content-type") || "";
 
   let data: any = null;
 
@@ -52,12 +70,9 @@ export async function apiRequest<T>(
     data = null;
   }
 
-  console.log("API RESPONSE:", {
-    status: response.status,
-    statusText: response.statusText,
-    url,
-    data,
-  });
+  // ------------------------------------------------------------
+  // ERROR HANDLING
+  // ------------------------------------------------------------
 
   if (!response.ok) {
     const message =
@@ -66,7 +81,9 @@ export async function apiRequest<T>(
       data?.detail ||
       `Request failed with status ${response.status}`;
 
-    throw new Error(`${message} (${response.status})`);
+    throw new Error(
+      `${message} (${response.status})`
+    );
   }
 
   return data as T;

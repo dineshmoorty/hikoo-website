@@ -2,10 +2,14 @@ import { apiRequest } from "@/lib/api";
 
 export interface Course {
   id: number;
+  courseOrder: number;
   name: string;
   code: string | null;
   description: string | null;
   duration: string | null;
+  baseFee: number;
+  gstPercentage: number;
+  totalFee: number;
   active: boolean;
 }
 
@@ -14,6 +18,8 @@ export interface CreateCourseRequest {
   code: string;
   description: string;
   duration: string;
+  baseFee: number;
+  gstPercentage: number;
 }
 
 export interface UpdateCourseRequest {
@@ -21,39 +27,37 @@ export interface UpdateCourseRequest {
   code: string;
   description: string;
   duration: string;
+  baseFee: number;
+  gstPercentage: number;
   active?: boolean;
 }
 
-export async function getCourses(): Promise<Course[]> {
+function authHeaders() {
   const token = localStorage.getItem("hikoo_token");
 
   if (!token) {
     throw new Error("Authentication required");
   }
 
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+}
+
+export async function getCourses(): Promise<Course[]> {
   return apiRequest<Course[]>("/api/courses", {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: authHeaders(),
   });
 }
 
 export async function createCourse(
   request: CreateCourseRequest
 ): Promise<Course> {
-  const token = localStorage.getItem("hikoo_token");
-
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
   return apiRequest<Course>("/api/courses", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: authHeaders(),
     body: JSON.stringify(request),
   });
 }
@@ -62,18 +66,9 @@ export async function updateCourse(
   id: number,
   request: UpdateCourseRequest
 ): Promise<Course> {
-  const token = localStorage.getItem("hikoo_token");
-
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
   return apiRequest<Course>(`/api/courses/${id}`, {
     method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: authHeaders(),
     body: JSON.stringify(request),
   });
 }
@@ -82,18 +77,9 @@ export async function updateCourseStatus(
   id: number,
   active: boolean
 ): Promise<Course> {
-  const token = localStorage.getItem("hikoo_token");
-
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
   return apiRequest<Course>(`/api/courses/${id}/status`, {
     method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: authHeaders(),
     body: JSON.stringify({ active }),
   });
 }

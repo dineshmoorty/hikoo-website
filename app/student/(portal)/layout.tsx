@@ -1,10 +1,11 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import StudentHeader from "@/components/student/StudentHeader";
 import StudentSidebar from "@/components/student/StudentSidebar";
+import { getMyStudentProfile } from "@/services/StudentProfileService";
 
 export default function StudentDashboardLayout({
   children,
@@ -12,6 +13,7 @@ export default function StudentDashboardLayout({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const [checking, setChecking] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -25,8 +27,35 @@ export default function StudentDashboardLayout({
       return;
     }
 
-    setChecking(false);
-  }, [router]);
+    // Profile page must remain accessible while the profile is incomplete.
+    if (pathname === "/student/profile") {
+      setChecking(false);
+      return;
+    }
+
+    async function checkProfileCompletion() {
+      try {
+        const profile = await getMyStudentProfile();
+
+        localStorage.setItem(
+          "hikoo_profile_completed",
+          String(profile.profileCompleted)
+        );
+
+        if (!profile.profileCompleted) {
+          router.replace("/student/profile");
+          return;
+        }
+
+        setChecking(false);
+      } catch (error) {
+        console.error("Failed to check student profile:", error);
+        router.replace("/student/profile");
+      }
+    }
+
+    checkProfileCompletion();
+  }, [pathname, router]);
 
   if (checking) {
     return (
@@ -43,17 +72,14 @@ export default function StudentDashboardLayout({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
       <StudentHeader onMenuClick={() => setSidebarOpen(true)} />
 
       <div className="flex">
-        {/* Sidebar */}
         <StudentSidebar
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
 
-        {/* Main Content */}
         <main className="min-w-0 flex-1 lg:ml-72">
           <div className="p-4 sm:p-6 lg:p-8">{children}</div>
         </main>

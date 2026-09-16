@@ -9,22 +9,59 @@ import java.util.Optional;
 public interface StudentCourseEnrollmentRepository
         extends JpaRepository<StudentCourseEnrollment, Long> {
 
+    // =========================================================
+    // STUDENT ENROLLMENTS
+    // =========================================================
+
     List<StudentCourseEnrollment> findByStudentId(Long studentId);
 
-    List<StudentCourseEnrollment> findByEmployeeId(Long employeeId);
+    // =========================================================
+    // ACTIVE COURSE
+    // =========================================================
+
+    boolean existsByStudentIdAndActiveTrue(
+            Long studentId
+    );
+
+    Optional<StudentCourseEnrollment>
+    findByStudentIdAndActiveTrue(
+            Long studentId
+    );
+
+    // =========================================================
+    // SAME COURSE
+    // =========================================================
 
     boolean existsByStudentIdAndCourseId(
             Long studentId,
             Long courseId
     );
 
-    Optional<StudentCourseEnrollment> findByIdAndEmployeeId(
-            Long id,
+    // =========================================================
+    // COMPLETED PREVIOUS COURSE
+    // =========================================================
+
+    boolean existsByStudentIdAndCourseIdAndCompletedTrue(
+            Long studentId,
+            Long courseId
+    );
+
+    // =========================================================
+    // EMPLOYEE
+    // =========================================================
+
+    List<StudentCourseEnrollment>
+    findByEmployeeId(Long employeeId);
+
+    Optional<StudentCourseEnrollment>
+    findByStudentIdAndEmployeeId(
+            Long studentId,
             Long employeeId
     );
 
-    Optional<StudentCourseEnrollment> findByStudentIdAndEmployeeId(
-            Long studentId,
+    Optional<StudentCourseEnrollment>
+    findByIdAndEmployeeId(
+            Long enrollmentId,
             Long employeeId
     );
 }

@@ -5,15 +5,19 @@ public record StudentResponse(
         Long userId,
         String name,
         String email,
+
         String phone,
-        String course,
+
+        // Academic identity
+        String institutionName,
+        String registerNumber,
         String program,
-        String internshipDuration,
-        String courseDuration,
+
         String address,
         String city,
         String state,
         String pincode,
+
         Boolean profileCompleted,
         Boolean active
 ) {

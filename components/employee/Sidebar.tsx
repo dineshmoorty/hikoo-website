@@ -6,6 +6,11 @@ import { useState } from "react";
 
 const menuItems = [
   {
+    label: "Profile",
+    href: "/employee/dashboard/profile",
+    icon: "●",
+  },
+  {
     label: "Dashboard",
     href: "/employee/dashboard",
     icon: "⌂",
@@ -20,11 +25,11 @@ const menuItems = [
     href: "/employee/dashboard/attendance",
     icon: "✓",
   },
-  {
-    label: "Courses",
-    href: "/employee/dashboard/courses",
-    icon: "▣",
-  },
+  // {
+  //   label: "Courses",
+  //   href: "/employee/dashboard/courses",
+  //   icon: "▣",
+  // },
   {
     label: "Internships",
     href: "/employee/dashboard/internships",
@@ -34,11 +39,6 @@ const menuItems = [
     label: "Certificates",
     href: "/employee/dashboard/certificates",
     icon: "◇",
-  },
-  {
-    label: "Profile",
-    href: "/employee/dashboard/profile",
-    icon: "●",
   },
 ];
 

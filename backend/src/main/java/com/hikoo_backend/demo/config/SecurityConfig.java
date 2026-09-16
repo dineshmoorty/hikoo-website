@@ -17,6 +17,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.hikoo_backend.demo.security.JwtAuthenticationFilter;
+
 import java.util.List;
 
 @Configuration
@@ -25,44 +27,40 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // =========================================================
-    // SECURITY FILTER CHAIN
-    // =========================================================
-
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http
     ) throws Exception {
 
         http
-                // -------------------------------------------------
+                // =================================================
                 // CSRF
-                // -------------------------------------------------
+                // =================================================
                 .csrf(csrf -> csrf.disable())
 
-                // -------------------------------------------------
+                // =================================================
                 // CORS
-                // -------------------------------------------------
+                // =================================================
                 .cors(cors -> cors.configurationSource(
                         corsConfigurationSource()
                 ))
 
-                // -------------------------------------------------
-                // STATELESS SESSION
-                // -------------------------------------------------
+                // =================================================
+                // SESSION
+                // =================================================
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
 
-                // -------------------------------------------------
+                // =================================================
                 // AUTHORIZATION
-                // -------------------------------------------------
+                // =================================================
                 .authorizeHttpRequests(auth -> auth
 
                         // =================================================
-                        // CORS PREFLIGHT
+                        // OPTIONS
                         // =================================================
                         .requestMatchers(
                                 HttpMethod.OPTIONS,
@@ -70,7 +68,7 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // =================================================
-                        // PUBLIC AUTH
+                        // AUTH
                         // =================================================
                         .requestMatchers(
                                 "/api/auth/register",
@@ -85,8 +83,43 @@ public class SecurityConfig {
                         ).hasRole("SUPER_ADMIN")
 
                         // =================================================
-                        // EMPLOYEE MANAGEMENT
+                        // ADMIN PROFILE
                         // =================================================
+                        .requestMatchers(
+                                "/api/admin/profile/**"
+                        ).hasRole("ADMIN")
+
+                        // =================================================
+                        // ADMIN STUDENTS
+                        // =================================================
+                        .requestMatchers(
+                                "/api/admin/students/**"
+                        ).hasRole("ADMIN")
+
+                        // =================================================
+                        // ADMIN ASSIGNMENTS
+                        // =================================================
+                        // Supports both possible authority formats:
+                        // ROLE_ADMIN
+                        // ADMIN
+                        .requestMatchers(
+                                "/api/admin/assignments/**"
+                        ).hasAnyAuthority(
+                                "ROLE_ADMIN",
+                                "ADMIN"
+                        )
+
+                        // =================================================
+                        // EMPLOYEES
+                        // =================================================
+
+                        // Create employee - Super Admin only
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/employees"
+                        ).hasRole("SUPER_ADMIN")
+
+                        // View / update / status - Admin + Super Admin
                         .requestMatchers(
                                 "/api/employees/**"
                         ).hasAnyRole(
@@ -95,16 +128,39 @@ public class SecurityConfig {
                         )
 
                         // =================================================
+                        // EMPLOYEE PROFILE
+                        // =================================================
+                        .requestMatchers(
+                                "/api/employee/profile/**"
+                        ).hasRole("EMPLOYEE")
+
+                        .requestMatchers(
+                                "/api/employee/**"
+                        ).hasRole("EMPLOYEE")
+
+                        // =================================================
+                        // STUDENT PROFILE
+                        // =================================================
+                        .requestMatchers(
+                                "/api/student/profile/**"
+                        ).hasRole("STUDENT")
+
+                        // =================================================
                         // COURSES
                         // =================================================
 
-                        // Create course
+                        // Create course - Super Admin only
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/courses"
                         ).hasRole("SUPER_ADMIN")
 
-                        // Activate / Deactivate course
+                        // Admin course management
+                        .requestMatchers(
+                                "/api/admin/courses/**"
+                        ).hasRole("ADMIN")
+
+                        // Course activate / deactivate
                         .requestMatchers(
                                 HttpMethod.PATCH,
                                 "/api/courses/*/status"
@@ -113,13 +169,13 @@ public class SecurityConfig {
                                 "ADMIN"
                         )
 
-                        // Edit complete course details
+                        // Course update - Super Admin only
                         .requestMatchers(
                                 HttpMethod.PATCH,
                                 "/api/courses/*"
                         ).hasRole("SUPER_ADMIN")
 
-                        // View courses
+                        // Course view
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/courses/**"
@@ -131,23 +187,114 @@ public class SecurityConfig {
                         )
 
                         // =================================================
-                        // EMPLOYEE APIs
+                        // COURSE MODULES
+                        // =================================================
+
+                        // Create module - Super Admin only
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/course-modules"
+                        ).hasRole("SUPER_ADMIN")
+
+                        // Admin module management
+                        .requestMatchers(
+                                "/api/admin/course-modules/**"
+                        ).hasRole("ADMIN")
+
+                        // Update module - Super Admin only
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/course-modules/*"
+                        ).hasRole("SUPER_ADMIN")
+
+                        // Activate / deactivate module
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/course-modules/*/status"
+                        ).hasRole("SUPER_ADMIN")
+
+                        // View modules
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/course-modules/**"
+                        ).hasAnyRole(
+                                "SUPER_ADMIN",
+                                "ADMIN",
+                                "EMPLOYEE",
+                                "STUDENT"
+                        )
+
+                        // =================================================
+                        // LESSONS
+                        // =================================================
+
+                        // Create lesson - Super Admin only
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/course-lessons"
+                        ).hasRole("SUPER_ADMIN")
+
+                        // Admin lesson management
+                        .requestMatchers(
+                                "/api/admin/course-lessons/**"
+                        ).hasRole("ADMIN")
+
+                        // Update lesson - Super Admin only
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/course-lessons/*"
+                        ).hasRole("SUPER_ADMIN")
+
+                        // Activate / deactivate lesson
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/course-lessons/*/status"
+                        ).hasRole("SUPER_ADMIN")
+
+                        // View lessons
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/course-lessons/**"
+                        ).hasAnyRole(
+                                "SUPER_ADMIN",
+                                "ADMIN",
+                                "EMPLOYEE",
+                                "STUDENT"
+                        )
+
+                        // =================================================
+                        // COUPONS
                         // =================================================
                         .requestMatchers(
-                                "/api/employee/**"
-                        ).hasRole("EMPLOYEE")
+                                "/api/coupons/**"
+                        ).hasAnyRole(
+                                "SUPER_ADMIN",
+                                "ADMIN"
+                        )
+
+                        // =================================================
+                        // STUDENT PROGRESS
+                        // =================================================
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/student/progress/lesson/complete"
+                        ).hasRole("STUDENT")
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/student/progress/course"
+                        ).hasRole("STUDENT")
 
                         // =================================================
                         // STUDENT ENROLLMENT
                         // =================================================
 
-                        // Student enrolls in a course
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/enrollments"
                         ).hasRole("STUDENT")
 
-                        // Student views own enrollments
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/enrollments/my"
@@ -157,23 +304,32 @@ public class SecurityConfig {
                         // EMPLOYEE ENROLLMENT
                         // =================================================
 
-                        // Employee sees only assigned students
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/enrollments/*/complete"
+                        ).hasRole("EMPLOYEE")
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/enrollments/my-assigned"
                         ).hasRole("EMPLOYEE")
 
-                        // Employee views one assigned student
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/enrollments/my-assigned/student/*"
                         ).hasRole("EMPLOYEE")
 
+                        // Employee course access
+                        .requestMatchers("/api/employee/courses/**").hasRole("EMPLOYEE")
+
+                        // Admin + Super Admin course assignment management
+                        .requestMatchers("/api/employee-course-assignments/**")
+                        .hasAnyRole("ADMIN", "SUPER_ADMIN")
+
                         // =================================================
-                        // ADMIN / SUPER ADMIN ENROLLMENT MANAGEMENT
+                        // ADMIN / SUPER ADMIN ENROLLMENT
                         // =================================================
 
-                        // Admin / Super Admin view all enrollments
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/enrollments"
@@ -182,7 +338,6 @@ public class SecurityConfig {
                                 "SUPER_ADMIN"
                         )
 
-                        // Admin / Super Admin assign employee
                         .requestMatchers(
                                 HttpMethod.PATCH,
                                 "/api/enrollments/*/employee"
@@ -191,7 +346,6 @@ public class SecurityConfig {
                                 "SUPER_ADMIN"
                         )
 
-                        // Admin / Super Admin view student's enrollments
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/enrollments/student/*"
@@ -200,7 +354,6 @@ public class SecurityConfig {
                                 "SUPER_ADMIN"
                         )
 
-                        // Admin / Super Admin view employee's enrollments
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/enrollments/employee/*"
@@ -209,8 +362,6 @@ public class SecurityConfig {
                                 "SUPER_ADMIN"
                         )
 
-                        // Admin / Super Admin view one enrollment
-                        // IMPORTANT: keep this AFTER the specific routes
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/enrollments/*"
@@ -220,28 +371,60 @@ public class SecurityConfig {
                         )
 
                         // =================================================
+                        // ATTENDANCE - ADMIN / SUPER ADMIN MANAGEMENT
+                        // =================================================
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/attendance/admin"
+                        ).hasAnyRole(
+                                "ADMIN",
+                                "SUPER_ADMIN"
+                        )
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/attendance/*"
+                        ).hasAnyRole(
+                                "ADMIN",
+                                "SUPER_ADMIN"
+                        )
+
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/attendance/*/status"
+                        ).hasAnyRole(
+                                "ADMIN",
+                                "SUPER_ADMIN"
+                        )
+
+                        // =================================================
                         // ATTENDANCE
                         // =================================================
 
-                        // Employee marks attendance
+                        // Employee + Admin + Super Admin
+                        // can mark attendance.
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/attendance"
-                        ).hasRole("EMPLOYEE")
+                        ).hasAnyRole(
+                                "EMPLOYEE",
+                                "ADMIN",
+                                "SUPER_ADMIN"
+                        )
 
-                        // Employee views attendance of assigned student
+                        // Employee attendance views
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/attendance/student/*"
                         ).hasRole("EMPLOYEE")
 
-                        // Employee views attendance of assigned enrollment
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/attendance/enrollment/*"
                         ).hasRole("EMPLOYEE")
 
-                        // Student views own attendance
+                        // Student own attendance
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/attendance/my"
@@ -253,9 +436,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // -------------------------------------------------
+                // =================================================
                 // JWT FILTER
-                // -------------------------------------------------
+                // =================================================
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -275,9 +458,7 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of(
-                        "http://localhost:3000"
-                )
+                List.of("http://localhost:3000")
         );
 
         configuration.setAllowedMethods(
@@ -299,9 +480,7 @@ public class SecurityConfig {
         );
 
         configuration.setExposedHeaders(
-                List.of(
-                        "Authorization"
-                )
+                List.of("Authorization")
         );
 
         configuration.setAllowCredentials(false);
@@ -323,7 +502,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-
         return new BCryptPasswordEncoder();
     }
 

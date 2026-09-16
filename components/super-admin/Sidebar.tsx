@@ -32,14 +32,24 @@ const menuItems: MenuItem[] = [
     icon: "🎓",
   },
   {
-    name: "Assignments",
-    href: "/super-admin/dashboard/assignments",
-    icon: "🎓",
+    name: "Users",
+    href: "/super-admin/dashboard/users",
+    icon: "👤",
   },
   {
     name: "Courses",
     href: "/super-admin/dashboard/courses",
     icon: "📚",
+  },
+  {
+    name: "Coupons",
+    href: "/super-admin/dashboard/coupons",
+    icon: "🏷️",
+  },
+  {
+    name: "Assignments",
+    href: "/super-admin/dashboard/assignments",
+    icon: "🎓",
   },
   {
     name: "Attendance",

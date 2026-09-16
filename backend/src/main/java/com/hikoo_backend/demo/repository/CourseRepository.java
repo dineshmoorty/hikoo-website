@@ -6,11 +6,20 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface CourseRepository extends JpaRepository<Course, Long> {
+public interface CourseRepository
+        extends JpaRepository<Course, Long> {
 
-    List<Course> findAllByOrderByNameAsc();
+    List<Course> findAllByOrderByCourseOrderAsc();
 
-    Optional<Course> findByCodeIgnoreCase(String code);
+    Optional<Course>
+    findTopByOrderByCourseOrderDesc();
+
+    Optional<Course>
+    findTopByCourseOrderLessThanOrderByCourseOrderDesc(
+            Integer courseOrder
+    );
 
     boolean existsByCodeIgnoreCase(String code);
+
+    Optional<Course> findByCodeIgnoreCase(String code);
 }

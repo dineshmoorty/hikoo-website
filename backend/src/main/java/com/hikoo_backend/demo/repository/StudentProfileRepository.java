@@ -11,4 +11,15 @@ public interface StudentProfileRepository
     Optional<StudentProfile> findByUserId(Long userId);
 
     boolean existsByUserId(Long userId);
+
+    boolean existsByInstitutionNameAndRegisterNumber(
+            String institutionName,
+            String registerNumber
+    );
+
+    boolean existsByInstitutionNameAndRegisterNumberAndIdNot(
+            String institutionName,
+            String registerNumber,
+            Long id
+    );
 }

@@ -23,6 +23,11 @@ interface StudentSidebarProps {
 
 const menuItems = [
   {
+    label: "Profile",
+    href: "/student/profile",
+    icon: UserRound,
+  },
+  {
     label: "Dashboard",
     href: "/student/dashboard",
     icon: LayoutDashboard,
@@ -33,14 +38,14 @@ const menuItems = [
     icon: BookOpen,
   },
   {
-    label: "Attendance",
-    href: "/student/dashboard/attendance",
-    icon: ClipboardCheck,
-  },
-  {
     label: "Internships",
     href: "/student/dashboard/internships",
     icon: BriefcaseBusiness,
+  },
+  {
+    label: "Attendance",
+    href: "/student/dashboard/attendance",
+    icon: ClipboardCheck,
   },
   {
     label: "Jobs",
@@ -56,11 +61,6 @@ const menuItems = [
     label: "Fees",
     href: "/student/dashboard/fees",
     icon: CreditCard,
-  },
-  {
-    label: "Profile",
-    href: "/student/dashboard/profile",
-    icon: UserRound,
   },
 ];
 
@@ -81,9 +81,9 @@ export default function StudentSidebar({
   };
 
   const isActive = (href: string) => {
-    if (href === "/student/dashboard") {
+    if (href === "/student/") {
       return pathname === href;
-    }
+    } 
 
     return pathname.startsWith(href);
   };

@@ -3,8 +3,14 @@ package com.hikoo_backend.demo.service;
 import com.hikoo_backend.demo.dto.AuthResponse;
 import com.hikoo_backend.demo.dto.LoginRequest;
 import com.hikoo_backend.demo.dto.RegisterRequest;
+import com.hikoo_backend.demo.entity.AdminProfile;
+import com.hikoo_backend.demo.entity.EmployeeProfile;
 import com.hikoo_backend.demo.entity.Role;
+import com.hikoo_backend.demo.entity.StudentProfile;
 import com.hikoo_backend.demo.entity.User;
+import com.hikoo_backend.demo.repository.AdminProfileRepository;
+import com.hikoo_backend.demo.repository.EmployeeProfileRepository;
+import com.hikoo_backend.demo.repository.StudentProfileRepository;
 import com.hikoo_backend.demo.repository.UserRepository;
 import com.hikoo_backend.demo.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +31,21 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
+    private final AdminProfileRepository adminProfileRepository;
+    private final EmployeeProfileRepository employeeProfileRepository;
+    private final StudentProfileRepository studentProfileRepository;
+
+
+    // ============================================================
+    // STUDENT REGISTER
+    // ============================================================
+
     @Transactional
     public AuthResponse register(RegisterRequest request) {
 
-        String email = request.getEmail().trim().toLowerCase();
+        String email = request.getEmail()
+                .trim()
+                .toLowerCase();
 
         if (userRepository.existsByEmail(email)) {
             throw new RuntimeException("Email is already registered");
@@ -44,13 +61,23 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        UserDetails userDetails = org.springframework.security.core.userdetails.User
-                .withUsername(savedUser.getEmail())
-                .password(savedUser.getPassword())
-                .roles(savedUser.getRole().name())
-                .build();
+        UserDetails userDetails =
+                org.springframework.security.core.userdetails.User
+                        .withUsername(savedUser.getEmail())
+                        .password(savedUser.getPassword())
+                        .roles(savedUser.getRole().name())
+                        .build();
 
         String token = jwtService.generateToken(userDetails);
+
+        /*
+         * Student profile is completed separately
+         * through the Student Profile page.
+         *
+         * Registration does NOT automatically
+         * complete the student profile.
+         */
+        boolean profileCompleted = false;
 
         return new AuthResponse(
                 token,
@@ -58,31 +85,79 @@ public class AuthService {
                 savedUser.getId(),
                 savedUser.getName(),
                 savedUser.getEmail(),
-                savedUser.getRole().name()
+                savedUser.getRole().name(),
+                profileCompleted
         );
     }
 
+
+    // ============================================================
+    // LOGIN
+    // ============================================================
+
     public AuthResponse login(LoginRequest request) {
 
-        String email = request.getEmail().trim().toLowerCase();
+        String email = request.getEmail()
+                .trim()
+                .toLowerCase();
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        email,
-                        request.getPassword()
-                )
-        );
+
+        // --------------------------------------------------------
+        // Authenticate email + password
+        // --------------------------------------------------------
+
+        Authentication authentication =
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                email,
+                                request.getPassword()
+                        )
+                );
+
+
+        // --------------------------------------------------------
+        // Get actual user
+        // --------------------------------------------------------
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+
+        // --------------------------------------------------------
+        // Check account status
+        // --------------------------------------------------------
 
         if (!user.getActive()) {
-            throw new RuntimeException("Your account is inactive");
+            throw new RuntimeException(
+                    "Your account is inactive"
+            );
         }
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        String token = jwtService.generateToken(userDetails);
+        // --------------------------------------------------------
+        // JWT user details
+        // --------------------------------------------------------
+
+        UserDetails userDetails =
+                (UserDetails) authentication.getPrincipal();
+
+        String token =
+                jwtService.generateToken(userDetails);
+
+
+        // --------------------------------------------------------
+        // PROFILE COMPLETION
+        // --------------------------------------------------------
+
+        boolean profileCompleted =
+                getProfileCompleted(user);
+
+
+        // --------------------------------------------------------
+        // RESPONSE
+        // --------------------------------------------------------
 
         return new AuthResponse(
                 token,
@@ -90,7 +165,79 @@ public class AuthService {
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
-                user.getRole().name()
+                user.getRole().name(),
+                profileCompleted
         );
+    }
+
+
+    // ============================================================
+    // PROFILE COMPLETION CHECK
+    // ============================================================
+
+    private boolean getProfileCompleted(User user) {
+
+
+        // --------------------------------------------------------
+        // SUPER ADMIN
+        // --------------------------------------------------------
+
+        if (user.getRole() == Role.SUPER_ADMIN) {
+            return true;
+        }
+
+
+        // --------------------------------------------------------
+        // ADMIN
+        // --------------------------------------------------------
+
+        if (user.getRole() == Role.ADMIN) {
+
+            return adminProfileRepository
+                    .findByUserId(user.getId())
+                    .map(profile ->
+                            Boolean.TRUE.equals(
+                                    profile.getProfileCompleted()
+                            )
+                    )
+                    .orElse(false);
+        }
+
+
+        // --------------------------------------------------------
+        // EMPLOYEE
+        // --------------------------------------------------------
+
+        if (user.getRole() == Role.EMPLOYEE) {
+
+            return employeeProfileRepository
+                    .findByUserId(user.getId())
+                    .map(profile ->
+                            Boolean.TRUE.equals(
+                                    profile.getProfileCompleted()
+                            )
+                    )
+                    .orElse(false);
+        }
+
+
+        // --------------------------------------------------------
+        // STUDENT
+        // --------------------------------------------------------
+
+        if (user.getRole() == Role.STUDENT) {
+
+            return studentProfileRepository
+                    .findByUserId(user.getId())
+                    .map(profile ->
+                            Boolean.TRUE.equals(
+                                    profile.getProfileCompleted()
+                            )
+                    )
+                    .orElse(false);
+        }
+
+
+        return false;
     }
 }

@@ -23,7 +23,8 @@ type StudentAttendanceRow = {
 };
 
 function getToday() {
-  return new Date().toISOString().split("T")[0];
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 export default function EmployeeAttendancePage() {
@@ -191,35 +192,26 @@ export default function EmployeeAttendancePage() {
       setError("");
       setSuccess("");
 
+      // Only NEW/unmarked enrollments should be submitted.
+      // Existing attendance records are read-only for this date.
       const studentsToSave = enrollments.filter(
-        (enrollment) =>
-          statusMap[enrollment.id] === "PRESENT" ||
-          statusMap[enrollment.id] === "ABSENT"
+        (enrollment) => {
+          const alreadyMarked = attendance.some(
+            (record) =>
+              record.enrollmentId === enrollment.id &&
+              record.attendanceDate === selectedDate
+          );
+
+          return (
+            !alreadyMarked &&
+            (statusMap[enrollment.id] === "PRESENT" ||
+              statusMap[enrollment.id] === "ABSENT")
+          );
+        }
       );
 
       if (studentsToSave.length === 0) {
         setError("Please mark at least one student.");
-        return;
-      }
-
-      // ------------------------------------------------------
-      // Check whether attendance already exists.
-      // ------------------------------------------------------
-
-      const alreadyMarked = studentsToSave.filter(
-        (enrollment) =>
-          attendance.some(
-            (record) =>
-              record.enrollmentId === enrollment.id &&
-              record.attendanceDate === selectedDate
-          )
-      );
-
-      if (alreadyMarked.length > 0) {
-        setError(
-          "Attendance is already marked for one or more selected students on this date."
-        );
-
         return;
       }
 
@@ -279,7 +271,19 @@ export default function EmployeeAttendancePage() {
     > = {};
 
     enrollments.forEach((enrollment) => {
-      updated[enrollment.id] = status;
+      const alreadyMarked = attendance.some(
+        (record) =>
+          record.enrollmentId === enrollment.id &&
+          record.attendanceDate === selectedDate
+      );
+
+      // Never overwrite an existing attendance record.
+      if (!alreadyMarked) {
+        updated[enrollment.id] = status;
+      } else {
+        updated[enrollment.id] =
+          statusMap[enrollment.id] || "UNMARKED";
+      }
     });
 
     setStatusMap(updated);
@@ -335,6 +339,11 @@ export default function EmployeeAttendancePage() {
     (row) => row.status === "UNMARKED"
   ).length;
 
+  // Number of enrollments that can still be marked for this date.
+  const editableCount = rows.filter(
+    (row) => row.attendance === null
+  ).length;
+
   // ==========================================================
   // LOADING
   // ==========================================================
@@ -388,7 +397,8 @@ export default function EmployeeAttendancePage() {
                 onClick={() =>
                   markAll("PRESENT")
                 }
-                className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                disabled={editableCount === 0}
+                className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Mark All Present
               </button>
@@ -398,7 +408,8 @@ export default function EmployeeAttendancePage() {
                 onClick={() =>
                   markAll("ABSENT")
                 }
-                className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                disabled={editableCount === 0}
+                className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Mark All Absent
               </button>
@@ -427,12 +438,19 @@ export default function EmployeeAttendancePage() {
           <input
             type="date"
             value={selectedDate}
-            onChange={(event) =>
-              setSelectedDate(
-                event.target.value
-              )
-            }
-            className="mt-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-gray-400 focus:bg-white"
+            min={getToday()}
+            max={getToday()}
+            onChange={(event) => {
+              if (event.target.value !== getToday()) {
+                setError("Employees can mark attendance only for today.");
+                return;
+              }
+
+              setError("");
+              setSelectedDate(getToday());
+            }}
+            readOnly
+            className="mt-3 rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-sm font-medium text-gray-900 outline-none"
           />
 
         </div>
@@ -603,7 +621,21 @@ export default function EmployeeAttendancePage() {
 
                       <td className="px-5 py-4">
 
-                        <div className="flex justify-center gap-2">
+                        {row.attendance ? (
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                              row.status === "PRESENT"
+                                ? "bg-green-50 text-green-700"
+                                : "bg-red-50 text-red-700"
+                            }`}>
+                              {row.status === "PRESENT" ? "Present" : "Absent"}
+                            </span>
+                            <span className="text-[11px] font-medium text-gray-400">
+                              Already Marked
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex justify-center gap-2">
 
                           <button
                             type="button"
@@ -653,7 +685,8 @@ export default function EmployeeAttendancePage() {
                             Absent
                           </button>
 
-                        </div>
+                          </div>
+                        )}
 
                       </td>
 
@@ -780,6 +813,18 @@ export default function EmployeeAttendancePage() {
                     Attendance Status
                   </p>
 
+                  {row.attendance ? (
+                    <div className={`rounded-xl px-4 py-3 text-center text-sm font-semibold ${
+                      row.status === "PRESENT"
+                        ? "bg-green-50 text-green-700"
+                        : "bg-red-50 text-red-700"
+                    }`}>
+                      {row.status === "PRESENT" ? "Present" : "Absent"}
+                      <span className="ml-2 text-xs font-medium opacity-70">
+                        Already Marked
+                      </span>
+                    </div>
+                  ) : (
                   <div className="grid grid-cols-2 gap-2">
 
                     <button
@@ -831,6 +876,7 @@ export default function EmployeeAttendancePage() {
                     </button>
 
                   </div>
+                  )}
 
                 </div>
 
@@ -899,7 +945,7 @@ export default function EmployeeAttendancePage() {
               onClick={saveAttendance}
               disabled={
                 saving ||
-                unmarkedCount === enrollments.length
+                editableCount === 0
               }
               className="rounded-xl bg-gray-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
             >

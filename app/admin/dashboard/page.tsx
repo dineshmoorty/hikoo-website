@@ -10,9 +10,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { apiRequest } from "@/lib/api";
 
 export default function AdminDashboardPage() {
   const [name, setName] = useState("Admin");
+
+  const [studentCount, setStudentCount] = useState<string>("—");
+  const [employeeCount, setEmployeeCount] = useState<string>("—");
+  const [courseCount, setCourseCount] = useState<string>("—");
+  const [dashboardLoading, setDashboardLoading] = useState(true);
 
   useEffect(() => {
     const storedName = localStorage.getItem("hikoo_name");
@@ -20,6 +26,49 @@ export default function AdminDashboardPage() {
     if (storedName) {
       setName(storedName);
     }
+
+    async function loadDashboardCounts() {
+      try {
+        setDashboardLoading(true);
+
+        const token = localStorage.getItem("hikoo_token");
+        const role = localStorage.getItem("hikoo_role");
+
+        if (!token || role !== "ADMIN") {
+          return;
+        }
+
+        const headers: HeadersInit = {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        };
+
+        const [students, employees, courses] = await Promise.all([
+          apiRequest<unknown[]>("/api/admin/students", {
+            method: "GET",
+            headers,
+          }),
+          apiRequest<unknown[]>("/api/employees", {
+            method: "GET",
+            headers,
+          }),
+          apiRequest<unknown[]>("/api/admin/courses", {
+            method: "GET",
+            headers,
+          }),
+        ]);
+
+        setStudentCount(String(students.length));
+        setEmployeeCount(String(employees.length));
+        setCourseCount(String(courses.length));
+      } catch (error) {
+        console.error("Unable to load admin dashboard counts.", error);
+      } finally {
+        setDashboardLoading(false);
+      }
+    }
+
+    loadDashboardCounts();
   }, []);
 
   const firstName = name.split(" ")[0];
@@ -67,7 +116,7 @@ export default function AdminDashboardPage() {
 
         <StatCard
           title="Students"
-          value="—"
+          value={dashboardLoading ? "…" : studentCount}
           description="Registered students"
           icon={<GraduationCap size={20} />}
           href="/admin/dashboard/students"
@@ -75,7 +124,7 @@ export default function AdminDashboardPage() {
 
         <StatCard
           title="Employees"
-          value="—"
+          value={dashboardLoading ? "…" : employeeCount}
           description="Platform staff"
           icon={<BriefcaseBusiness size={20} />}
           href="/admin/dashboard/employees"
@@ -83,7 +132,7 @@ export default function AdminDashboardPage() {
 
         <StatCard
           title="Courses"
-          value="—"
+          value={dashboardLoading ? "…" : courseCount}
           description="Available programs"
           icon={<BookOpen size={20} />}
           href="/admin/dashboard/courses"

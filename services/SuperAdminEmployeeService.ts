@@ -37,13 +37,13 @@ export interface UpdateEmployeeRequest {
 }
 
 export async function getEmployees(): Promise<Employee[]> {
-  return apiRequest<Employee[]>("/api/super-admin/employees", {
+  return apiRequest<Employee[]>("/api/employees", {
     method: "GET",
   });
 }
 
 export async function getEmployee(id: number): Promise<Employee> {
-  return apiRequest<Employee>(`/api/super-admin/employees/${id}`, {
+  return apiRequest<Employee>(`/api/employees/${id}`, {
     method: "GET",
   });
 }
@@ -51,7 +51,7 @@ export async function getEmployee(id: number): Promise<Employee> {
 export async function createEmployee(
   data: CreateEmployeeRequest
 ): Promise<Employee> {
-  return apiRequest<Employee>("/api/super-admin/employees", {
+  return apiRequest<Employee>("/api/employees", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -61,18 +61,18 @@ export async function updateEmployee(
   id: number,
   data: UpdateEmployeeRequest
 ): Promise<Employee> {
-  return apiRequest<Employee>(`/api/super-admin/employees/${id}`, {
+  return apiRequest<Employee>(`/api/employees/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data),
   });
 }
 
 export async function updateEmployeeStatus(
-  userId: number,
+  id: number,
   active: boolean
 ): Promise<Employee> {
   return apiRequest<Employee>(
-    `/api/super-admin/users/${userId}/status?active=${active}`,
+    `/api/employees/${id}/status?active=${active}`,
     {
       method: "PATCH",
     }

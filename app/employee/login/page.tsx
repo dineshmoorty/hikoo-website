@@ -47,8 +47,17 @@ export default function EmployeeLoginPage() {
       localStorage.setItem("hikoo_role", response.role);
       localStorage.setItem("hikoo_name", response.name);
       localStorage.setItem("hikoo_email", response.email);
+      localStorage.setItem(
+        "hikoo_profile_completed",
+        String(response.profileCompleted)
+      );
 
-      router.replace("/employee/dashboard");
+      // Employees must complete their profile before entering the dashboard.
+      if (response.profileCompleted) {
+        router.replace("/employee/dashboard");
+      } else {
+        router.replace("/employee/dashboard/profile");
+      }
     } catch (err) {
       console.error(err);
 

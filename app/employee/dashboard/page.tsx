@@ -2,12 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  getMyEmployeeCourses,
+  EmployeeCourse,
+} from "@/services/EmployeeCourseService";
 
 export default function EmployeeDashboardPage() {
   const router = useRouter();
 
   const [name, setName] = useState("Employee");
   const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const [studentsCount, setStudentsCount] = useState(0);
+  const [attendanceCount, setAttendanceCount] = useState(0);
+  const [courses, setCourses] = useState<EmployeeCourse[]>([]);
+  const [internshipsCount, setInternshipsCount] = useState(0);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("hikoo_token");
@@ -24,6 +35,75 @@ export default function EmployeeDashboardPage() {
     }
 
     setCheckingAuth(false);
+
+    async function loadDashboard() {
+      try {
+        setDashboardLoading(true);
+        setDashboardError("");
+
+        const courseData = await getMyEmployeeCourses();
+        setCourses(courseData);
+
+        // These two counts are loaded independently so one unavailable
+        // feature does not break the rest of the dashboard.
+        const headers = { Authorization: `Bearer ${token}` };
+
+        const [studentsResult, attendanceResult, internshipsResult] =
+          await Promise.allSettled([
+            fetch("/api/employee/students", {
+              method: "GET",
+              headers,
+            }),
+            fetch("/api/attendance/employee/today", {
+              method: "GET",
+              headers,
+            }),
+            fetch("/api/employee/internships", {
+              method: "GET",
+              headers,
+            }),
+          ]);
+
+        if (
+          studentsResult.status === "fulfilled" &&
+          studentsResult.value.ok
+        ) {
+          const data = await studentsResult.value.json();
+          setStudentsCount(Array.isArray(data) ? data.length : 0);
+        }
+
+        if (
+          attendanceResult.status === "fulfilled" &&
+          attendanceResult.value.ok
+        ) {
+          const data = await attendanceResult.value.json();
+          if (Array.isArray(data)) {
+            setAttendanceCount(data.length);
+          } else if (typeof data?.count === "number") {
+            setAttendanceCount(data.count);
+          }
+        }
+
+        if (
+          internshipsResult.status === "fulfilled" &&
+          internshipsResult.value.ok
+        ) {
+          const data = await internshipsResult.value.json();
+          setInternshipsCount(Array.isArray(data) ? data.length : 0);
+        }
+      } catch (error) {
+        console.error("Failed to load employee dashboard:", error);
+        setDashboardError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load dashboard data."
+        );
+      } finally {
+        setDashboardLoading(false);
+      }
+    }
+
+    loadDashboard();
   }, [router]);
 
   if (checkingAuth) {
@@ -53,27 +133,33 @@ export default function EmployeeDashboardPage() {
         </p>
       </div>
 
+      {dashboardError && (
+        <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {dashboardError}
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {[
           {
             title: "Students",
-            value: "—",
+            value: dashboardLoading ? "…" : String(studentsCount),
             description: "Students assigned",
           },
           {
             title: "Attendance",
-            value: "—",
+            value: dashboardLoading ? "…" : String(attendanceCount),
             description: "Today&apos;s attendance",
           },
           {
             title: "Courses",
-            value: "—",
+            value: dashboardLoading ? "…" : String(courses.length),
             description: "Active courses",
           },
           {
             title: "Internships",
-            value: "—",
+            value: dashboardLoading ? "…" : String(internshipsCount),
             description: "Active internships",
           },
         ].map((card) => (
@@ -125,7 +211,7 @@ export default function EmployeeDashboardPage() {
             },
             {
               title: "Courses",
-              description: "Manage course activities",
+              description: "View your assigned courses",
               href: "/employee/dashboard/courses",
             },
             {
@@ -160,6 +246,51 @@ export default function EmployeeDashboardPage() {
             </button>
           ))}
         </div>
+
+        {courses.length > 0 && (
+          <div className="mt-8 border-t border-gray-100 pt-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-950">
+                  Assigned Courses
+                </h3>
+                <p className="mt-1 text-xs text-gray-400">
+                  Quick access to your assigned learning content.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => router.push("/employee/dashboard/courses")}
+                className="text-xs font-semibold text-gray-700 hover:text-gray-950"
+              >
+                View all
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {courses.slice(0, 3).map((course) => (
+                <button
+                  key={course.id}
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      `/employee/dashboard/courses/${course.id}`
+                    )
+                  }
+                  className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-left transition hover:border-gray-200 hover:bg-white hover:shadow-sm"
+                >
+                  <p className="truncate text-sm font-semibold text-gray-900">
+                    {course.name}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-400">
+                    {course.code || "Assigned course"}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

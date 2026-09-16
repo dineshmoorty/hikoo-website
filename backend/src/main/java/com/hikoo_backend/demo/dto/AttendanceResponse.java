@@ -12,19 +12,14 @@ public record AttendanceResponse(
         Long enrollmentId,
 
         Long studentId,
-
         String studentName,
-
         String studentEmail,
 
         Long courseId,
-
         String courseName,
-
         String courseCode,
 
         Long employeeId,
-
         String employeeName,
 
         LocalDate attendanceDate,
@@ -34,7 +29,8 @@ public record AttendanceResponse(
         String remarks,
 
         LocalDateTime createdAt,
+        LocalDateTime updatedAt,
 
-        LocalDateTime updatedAt
+        Boolean active
 ) {
 }

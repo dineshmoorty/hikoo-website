@@ -6,7 +6,18 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "student_profiles")
+@Table(
+        name = "student_profiles",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_student_institution_register",
+                        columnNames = {
+                                "institution_name",
+                                "register_number"
+                        }
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,11 +30,22 @@ public class StudentProfile {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            unique = true
+    )
     private User user;
 
     @Column(length = 30)
     private String phone;
+
+    // Academic identity
+    @Column(length = 200)
+    private String institutionName;
+
+    @Column(length = 100)
+    private String registerNumber;
 
     @Column(length = 255)
     private String course;
