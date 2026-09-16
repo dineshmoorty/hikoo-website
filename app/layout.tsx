@@ -40,6 +40,11 @@ export const metadata: Metadata = {
     follow: true,
   },
 
+  // Google Search Console verification
+  verification: {
+    google: "yFagY1pkqzpBUolWl8Fx7-dfPsuASOEv-Ruaq4MXO1A",
+  },
+
   openGraph: {
     type: "website",
     locale: "en_IN",
