@@ -17,9 +17,13 @@ const navItems = [
     name: "Services",
     href: "/services",
   },
+  // {
+  //   name: "Clients",
+  //   href: "/clients",
+  // },
   {
-    name: "Clients",
-    href: "/clients",
+    name: "Courses",
+    href : "/courses",
   },
   {
     name: "Internship",

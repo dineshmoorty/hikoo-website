@@ -6,12 +6,20 @@ const quickLinks = [
     href: "/",
   },
   {
-    name: "About",
-    href: "/about",
+    name: "Products",
+    href: "/products",
   },
   {
     name: "Services",
     href: "/services",
+  },
+  // {
+  //   name: "Clients",
+  //   href: "/clients",
+  // },
+  {
+    name: "Courses",
+    href : "/courses",
   },
   {
     name: "Internship",
@@ -20,6 +28,10 @@ const quickLinks = [
   {
     name: "Careers",
     href: "/careers",
+  },
+  {
+    name: "About",
+    href: "/about",
   },
   {
     name: "Contact",
@@ -221,7 +233,7 @@ export default function Footer() {
                 </p>
 
                 <a
-                  href="mailto:hikootechnology@gmail.com"
+                  href="mailto:contact@hikoo.in"
                   className="
                     mt-1
                     block
@@ -234,7 +246,7 @@ export default function Footer() {
                     hover:text-gray-950
                   "
                 >
-                  hikootechnology@gmail.com
+                  contact@hikoo.in
                 </a>
               </div>
 
