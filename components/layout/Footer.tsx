@@ -40,10 +40,12 @@ const quickLinks = [
 ];
 
 const services = [
-  "Java Development",
-  "iOS Development",
-  "React Development",
-  "Python Development",
+  "FinTech Solutions",
+  "Food Ordering Solutions",
+  "Employee Management Solutions",
+  "Student Management Solutions",
+  "Website Development",
+  "Custom Software Development"
 ];
 
 export default function Footer() {
@@ -95,8 +97,16 @@ export default function Footer() {
           ========================== */}
 
           <div>
-            <Link
-              href="/"
+          <Link
+            href="/"
+            className="
+              inline-block
+              transition-opacity
+              duration-200
+              hover:opacity-80
+            "
+          >
+            <div
               className="
                 text-2xl
                 font-bold
@@ -105,7 +115,20 @@ export default function Footer() {
               "
             >
               HIKOO Technologies
-            </Link>
+            </div>
+
+            <div
+              className="
+                mt-1
+                text-xs
+                font-medium
+                tracking-wide
+                text-gray-500
+              "
+            >
+              Simplicity Solves Complexity
+            </div>
+          </Link>
 
             <p className="mt-5 max-w-sm text-sm leading-6 text-gray-600">
               Building modern digital solutions that transform ideas

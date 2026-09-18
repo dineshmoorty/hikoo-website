@@ -102,7 +102,7 @@ export default function Hero() {
           <h1
             className="
               max-w-5xl
-              text-5xl
+              text-4xl
               font-bold
               leading-[1.05]
               tracking-[-0.04em]

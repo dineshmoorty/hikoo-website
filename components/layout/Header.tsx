@@ -101,8 +101,10 @@ export default function Header() {
                 sm:w-[50px]
               "
             />
-              <span
-                className="px-2
+
+            <div className="px-2">
+              <div
+                className="
                   text-xl
                   font-bold
                   tracking-tight
@@ -110,7 +112,19 @@ export default function Header() {
                 "
               >
                 HIKOO Technologies
-              </span>
+              </div>
+
+              <div
+                className="
+                  text-xs
+                  font-medium
+                  tracking-wide
+                  text-gray-400
+                "
+              >
+                Simplicity Solves Complexity
+              </div>
+            </div>
           </Link>
 
           {/* =========================
